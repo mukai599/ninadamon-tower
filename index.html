@@ -439,6 +439,28 @@
         #story-text .story-quote { color: #fff; font-size: 18px; }
         #story-crawl.show #story-text { animation: story-scroll 38s linear forwards; }
         @keyframes story-scroll { from { transform: translateY(0); } to { transform: translateY(calc(-100cqh - 100%)); } }
+        /* ===== クリア画面「次の冒険を選ぶのだ！」: 3つの編(今は近日公開) ===== */
+        .next-adventure { width: 92%; margin: 10px 0; position: relative; }
+        .next-adv-title { background: #ffda44; margin: 0 0 8px; padding: 5px; border-radius: 12px; font-weight: bold; color: #333; font-size: 12px; }
+        .adv-cards { display: flex; gap: 8px; }
+        .adv-card { flex: 1; position: relative; padding: 0; border: none; background: none; cursor: pointer; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .adv-card:active { transform: scale(0.96); }
+        .adv-card img { width: 100%; display: block; filter: saturate(0.7) brightness(0.8); }
+        .adv-lock { position: absolute; left: 0; right: 0; bottom: 0; padding: 4px 0; background: rgba(0,0,0,0.65); color: #fff; font-size: 11px; font-weight: bold; }
+        #adv-toast {
+            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 5;
+            background: rgba(20,15,40,0.92); color: #ffe9a8; font-weight: bold; font-size: 14px; line-height: 1.6;
+            padding: 12px 18px; border-radius: 14px; border: 1.5px solid #ffda44; white-space: nowrap;
+            opacity: 0; pointer-events: none; transition: opacity 0.25s;
+        }
+        #adv-toast.show { opacity: 1; }
+        /* タイトル画面の「制覇済み」バッジ */
+        #clear-badge {
+            position: absolute; bottom: 150px; left: 50%; transform: translateX(-50%); z-index: 5;
+            display: none; padding: 4px 14px; border-radius: 20px; white-space: nowrap;
+            background: linear-gradient(90deg, #ffe08a, #d9a528); color: #4a3200; font-size: 12px; font-weight: 900;
+            box-shadow: 0 0 12px rgba(255,214,102,0.6);
+        }
     </style>
 </head>
 <body>
@@ -461,10 +483,11 @@
         </div></div></div>
         <span id="loading-msg">プログラム読み込み中...</span>
         <div id="err-log"></div>
+        <div id="clear-badge"></div>
         <div id="tap-start-badge">タップしてスタート</div>
         <div id="tap-start-catch">100問の豆知識で、塔のてっぺんを目指すのだ！</div>
         <div id="title-hud">
-        <div id="notice-board"><div id="notice-board-text">🎉 期間限定イベント開催中！　　　❄️ 季節限定クイズ登場　　　⭐ 期間限定『動物シリーズ』配信中！　　　🐉 10体ごとに黒竜が出現するのだ！　　　</div></div>
+        <div id="notice-board"><div id="notice-board-text">🎉 期間限定イベント開催中！　　　❄️ 季節限定クイズ登場　　　⭐ 期間限定『動物シリーズ』配信中！　　　🐉 10体ごとに強力なボスが出現するのだ！　　　👑 黒竜のあとにも、まだ見ぬボスたちが待っているのだ！　　　</div></div>
         <div id="help-btn" onclick="event.stopPropagation(); openManual();">？</div>
         </div>
     </div>
@@ -472,11 +495,11 @@
     <div id="manual-screen" class="full-overlay" style="display:none;">
         <h2 class="result-title">📖 あそびかた</h2>
         <div class="manual-card"><b>🎯 クイズに答えよう</b><span>問題を読んで、A・B・Cの3つから正しい答えをタップするのだ。答えたあとは解説が出るので、画面をタップすると次の問題に進むのだ。</span></div>
-        <div class="manual-card"><b>⏱️ 時間制限</b><span>問題の上のバーが残り時間なのだ。緑→黄→赤と変わり、なくなると不正解と同じ扱いになるのだ。黒竜を倒すたびにレベルが上がって、制限時間が10秒→8秒→6.5秒→5秒と短くなるのだ。</span></div>
+        <div class="manual-card"><b>⏱️ 時間制限</b><span>問題の上のバーが残り時間なのだ。緑→黄→赤と変わり、なくなると不正解と同じ扱いになるのだ。ボスを倒すたびにレベルが上がって、制限時間が10秒→8秒→6.5秒→5秒と短くなるのだ。</span></div>
         <div class="manual-card"><b>❤️ HPゲージ</b><span>ニナだもんの頭の上がニナだもんのHP、敵の下が敵のHPなのだ。正解すると敵に、不正解だとニナだもんにダメージが入るのだ。</span></div>
         <div class="manual-card"><b>💊 回復ボタン</b><span>左上の「回復」をタップするとHPが回復するのだ。1ゲームで3回まで使えるのだ。</span></div>
         <div class="manual-card"><b>🔥 コンボと闘気</b><span>連続で正解するとコンボになり、点数が増えるのだ。コンボが続くと、ニナだもんの闘気が赤→オレンジ→黄→緑→青→藍→紫と変わっていくのだ。</span></div>
-        <div class="manual-card"><b>🐉 ボス戦</b><span>10体目・20体目…の敵は黒竜のボスなのだ。倒すとイベントクイズが出て、正解するとアイテム(💎)がもらえるのだ。</span></div>
+        <div class="manual-card"><b>🐉 ボス戦</b><span>10体目ごとにボスが出るのだ。最初のボスは黒竜、そのあともキングスライムなど強いボスが次々に現れるのだ。倒すとイベントクイズが出て、正解するとアイテム(💎)がもらえるのだ。</span></div>
         <div class="manual-card"><b>🗼 塔を登る</b><span>敵を倒すたびに下層→中層→最上階と塔を登っていくのだ。上に行くほど問題も難しくなるのだ。</span></div>
         <div class="manual-card"><b>⭐ スコアとランキング</b><span>上の段にSCOREと撃破数(💀)が出るのだ。ゲーム終了後は全国ランキングにも登録できるのだ。</span></div>
         <div class="manual-card"><b>📝 クレジット</b><span>音声：VOICEVOX:ずんだもん</span></div>
@@ -516,10 +539,15 @@
         <div style="font-size:32px; font-weight:bold; color:var(--gold); margin:5px 0; text-shadow:0 0 16px rgba(255,214,102,0.5);"><span id="clear-score">0</span>点</div>
         <div id="clear-item-bonus-row" class="result-item-bonus" style="display:none;">💎 アイテムボーナス +<span id="clear-item-bonus-val">0</span>点</div>
         <div class="result-sub">正解数 <span id="clear-correct">0</span>問 / 正解率 <span id="clear-accuracy">0</span>% / 撃破数 <span id="clear-defeated">0</span>体</div>
-        <a href="#" style="display:block; margin:10px 0; border-radius:16px; overflow:hidden; width:90%; box-shadow:0 6px 14px rgba(0,0,0,0.1);">
-            <p style="background:#ffda44; margin:0; padding:5px; font-weight:bold; color:#333; font-size:12px;">▼ 次の冒険を選ぶのだ！ ▼</p>
-            <img src="images/next_stage_banner.png" style="width:100%; display:block;" alt="次ステージ">
-        </a>
+        <div class="next-adventure">
+            <p class="next-adv-title">▼ 次の冒険を選ぶのだ！ ▼</p>
+            <div class="adv-cards">
+                <button class="adv-card" onclick="openAdventure('歴史編')"><img src="images/stage_history.png" alt="歴史編"><span class="adv-lock">🔒 近日公開</span></button>
+                <button class="adv-card" onclick="openAdventure('科学編')"><img src="images/stage_science.png" alt="科学編"><span class="adv-lock">🔒 近日公開</span></button>
+                <button class="adv-card" onclick="openAdventure('文学編')"><img src="images/stage_literature.png" alt="文学編"><span class="adv-lock">🔒 近日公開</span></button>
+            </div>
+            <div id="adv-toast"></div>
+        </div>
         <div class="rank-table-frame"><table class="rank-table"><tbody id="clear-rank-body"></tbody></table></div>
         <button class="online-rank-btn" onclick="openOnlineRanking()">🌍 全国ランキングを見る／送信する</button>
         <button class="big-btn" onclick="location.reload()" style="padding:10px 30px; font-size:16px;">最初から遊ぶ</button>
@@ -661,21 +689,40 @@
     }
 
     const bossDesign = { name: "黒竜", img: "images/anim_boss_idle.gif", roarImg: "images/anim_boss_roar.gif", svg: enemyDesigns[3].svg };
+    // ボスは10体ごとに順番に登場: 黒竜 → キングスライム → 漆黒の騎士ゴーレム → 氷の女王スライム → 炎の鬼 → 古代の石像ゴーレム
+    const BOSSES = [
+        bossDesign,
+        { name: "キングスライム", img: "images/boss_kingslime.png", svg: enemyDesigns[0].svg },
+        { name: "漆黒の騎士ゴーレム", img: "images/boss_blackknight.png", svg: enemyDesigns[4].svg },
+        { name: "氷の女王スライム", img: "images/boss_icequeen.png", svg: enemyDesigns[0].svg },
+        { name: "炎の鬼", img: "images/boss_fireoni.png", svg: enemyDesigns[3].svg },
+        { name: "古代の石像ゴーレム", img: "images/boss_golem.png", svg: enemyDesigns[4].svg }
+    ];
+    // 雑魚は階ごとに入れ替え: 1〜9体目は最初の5体、11〜19体目は追加の4体、21体目以降は9体すべて
+    const MONSTERS_FLOOR1 = enemyDesigns.slice(0, 5);
+    const MONSTERS_FLOOR2 = enemyDesigns.slice(5);
+    function currentEnemyDesign() {
+        const stage = Math.floor(defCount / 10);       // 0: 1〜10体目, 1: 11〜20体目, ...
+        if (isBossTurn()) return BOSSES[stage % BOSSES.length];
+        const pos = defCount % 10;                       // その階で何体目か(0〜8)
+        const set = stage === 0 ? MONSTERS_FLOOR1 : stage === 1 ? MONSTERS_FLOOR2 : enemyDesigns;
+        return set[(pos + (stage >= 2 ? stage * 3 : 0)) % set.length]; // 3階目以降は毎回ちがう順番で登場
+    }
     let bossRoarTimer = null;
-    let bossIntroPose = false; // 黒竜の登場時、ニナだもんが気合いを入れるポーズ(anim_fight_once.gif)を出す
+    let bossIntroPose = false; // ボスの登場時、ニナだもんが気合いを入れるポーズ(anim_fight_once.gif)を出す
 
     function renderEnemy(idx, opts) {
         opts = opts || {};
         const isBoss = isBossTurn();
         setBgm(isBoss ? sounds.bgmBoss : sounds.bgmNormal);
-        const d = isBoss ? bossDesign : enemyDesigns[idx % enemyDesigns.length];
+        const d = currentEnemyDesign();
         document.getElementById('enemy-name-tag').innerText = isBoss ? ('ボス ' + d.name) : d.name;
         document.getElementById('enemy-name-tag').classList.toggle('boss-tag', isBoss);
         document.getElementById('enemy-visual-wrap').classList.toggle('boss-size', isBoss);
         const visual = document.getElementById('enemy-visual');
         clearTimeout(bossRoarTimer);
         const roaring = isBoss && opts.spawn;
-        const src = roaring ? d.roarImg : d.img;
+        const src = (roaring && d.roarImg) || d.img; // 咆哮アニメがあるのは黒竜だけ。ほかのボスは登場演出+咆哮の音
         if (src) {
             visual.innerHTML = `<img src="${src}" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentElement.innerHTML=${JSON.stringify(d.svg)}">`;
         } else {
@@ -973,7 +1020,7 @@
     }
 
     // カウントダウン音(se_tick.mp3)は「0.2秒ごとのカチッ」が10秒続く1本の音。問題が出た時に1回だけ頭から流し、バーも同じ10秒で減らす
-    // レベル: 黒竜を倒すごとに1つ上がり、制限時間が短くなる(Lv.1=10秒 → Lv.2=8秒 → Lv.3=6.5秒 → Lv.4以降=5秒)
+    // レベル: ボスを倒すごとに1つ上がり、制限時間が短くなる(Lv.1=10秒 → Lv.2=8秒 → Lv.3=6.5秒 → Lv.4以降=5秒)
     const LEVEL_TIME_MS = [10000, 8000, 6500, 5000];
     function currentLevel() { return 1 + Math.floor(defCount / 10); }
     function timeLimitMs() {
@@ -1119,7 +1166,6 @@
                 b.style.display = "none";
                 visual.classList.remove('enemy-defeat-anim');
                 eHp = 100;
-                if (!wasBoss) enemyIndex = (enemyIndex + 1) % enemyDesigns.length;
                 renderEnemy(enemyIndex, {spawn:true});
                 updateUI(); loadQuiz();
             }, wasBoss ? 2200 : 700);
@@ -1172,6 +1218,27 @@
     }
 
     // ▼▼▼ 音声修正ポイント ▼▼▼
+    // ===== 100問制覇の記録(このスマホに保存)と、タイトル画面の「👑制覇済み」バッジ =====
+    const CLEAR_KEY = 'quiztower_clear_count';
+    function getClearCount() { try { return parseInt(localStorage.getItem(CLEAR_KEY)) || 0; } catch(e) { return 0; } }
+    function recordClear() { try { localStorage.setItem(CLEAR_KEY, String(getClearCount() + 1)); } catch(e) {} }
+    function showClearBadge() {
+        const n = getClearCount(), el = document.getElementById('clear-badge');
+        if (!el || n <= 0) return;
+        el.innerText = '👑 100問制覇済み' + (n > 1 ? ' ×' + n : '');
+        el.style.display = 'block';
+    }
+    showClearBadge();
+    // 次の冒険(歴史編・科学編・文学編)は準備中
+    let advToastTimer = null;
+    function openAdventure(name) {
+        const t = document.getElementById('adv-toast');
+        t.innerText = '「' + name + '」は準備中なのだ！\nおたのしみに！';
+        t.classList.add('show');
+        clearTimeout(advToastTimer);
+        advToastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+    }
+
     function showAllClearScreen() {
         stopTimer(); sounds.bgm.pause();
         sounds.clearBgm.currentTime = 0; sounds.clearBgm.play().catch(e=>{});
@@ -1187,6 +1254,7 @@
         document.getElementById('clear-accuracy').innerText = getAccuracy();
         document.getElementById('clear-defeated').innerText = defCount;
         saveRanking('clear-rank-body');
+        recordClear();
         document.getElementById('all-clear-screen').style.display = 'flex';
     }
 
