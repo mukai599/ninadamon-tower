@@ -468,6 +468,27 @@
         }
         #contact-note { font-size: 11.5px; color: #b0533c; margin-top: 6px; display: none; }
         .app-version { display: block; margin-top: 6px; font-size: 10px; color: #999; text-align: right; }
+        /* ===== ゲーム中のメニュー(一時停止・あそびかた・不具合の報告) ===== */
+        #ingame-menu-btn {
+            position: absolute; top: 6px; right: 10px; z-index: 9;
+            width: 30px; height: 30px; border-radius: 50%; padding: 0; cursor: pointer;
+            background: rgba(0,0,0,0.35); color: #fff; font-size: 15px; font-weight: 900;
+            border: 1.5px solid rgba(255,255,255,0.75);
+        }
+        #pause-menu {
+            position: absolute; inset: 0; z-index: 1900; background: rgba(10,8,25,0.7);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .pause-card {
+            width: 84%; max-width: 340px; background: #fff; border-radius: 20px; padding: 20px 18px;
+            display: flex; flex-direction: column; gap: 10px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        }
+        .pause-title { font-size: 18px; font-weight: 900; color: var(--ink); margin-bottom: 4px; }
+        .pause-btn { padding: 12px; border-radius: 14px; border: 2px solid #e3eae6; background: #f7faf8; font-weight: bold; font-size: 14px; color: var(--ink); cursor: pointer; }
+        .pause-btn.pause-resume { background: linear-gradient(90deg, var(--accent), var(--accent-dark)); color: #fff; border: none; font-size: 16px; }
+        .pause-card small { font-size: 11px; color: var(--sub-ink); }
+        /* 結果画面の「不具合を報告する」リンク */
+        .report-link { margin-top: 10px; background: none; border: none; color: rgba(255,255,255,0.75); font-size: 12px; text-decoration: underline; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -496,6 +517,16 @@
         <div id="title-hud">
         <div id="notice-board"><div id="notice-board-text">🎉 期間限定イベント開催中！　　　❄️ 季節限定クイズ登場　　　⭐ 期間限定『動物シリーズ』配信中！　　　🐉 5体ごとに強力なボスが出現するのだ！　　　👑 塔の最上階では黒竜が待っているのだ！　　　</div></div>
         <div id="help-btn" onclick="event.stopPropagation(); openManual();">？</div>
+        </div>
+    </div>
+
+    <div id="pause-menu" style="display:none;">
+        <div class="pause-card">
+            <div class="pause-title">⏸ 一時停止中</div>
+            <button class="pause-btn pause-resume" onclick="closePauseMenu()">▶ ゲームを続ける</button>
+            <button class="pause-btn" onclick="openManual()">📖 あそびかた</button>
+            <button class="pause-btn" onclick="openContact()">📮 不具合・問題の間違いを報告する</button>
+            <small>報告フォームには、今の階・撃破数などが自動で入るのだ。</small>
         </div>
     </div>
 
@@ -531,6 +562,7 @@
             <button class="big-btn" onclick="location.reload()" style="background:linear-gradient(90deg,#ffda44,#ffb33d); color:#5a3b00;">もう一度遊ぶ</button>
             <button class="online-rank-btn" onclick="openOnlineRanking()">🌍 全国ランキング</button>
         </div>
+        <button class="report-link" onclick="openContact()">📮 不具合・問題の間違いを報告する</button>
 
         <a href="https://line.me/S/sticker/32533905" target="_blank" id="promo-box">
             <div class="promo-content">
@@ -563,6 +595,7 @@
         <div class="rank-table-frame"><table class="rank-table"><tbody id="clear-rank-body"></tbody></table></div>
         <button class="online-rank-btn" onclick="openOnlineRanking()">🌍 全国ランキングを見る／送信する</button>
         <button class="big-btn" onclick="location.reload()" style="padding:10px 30px; font-size:16px;">最初から遊ぶ</button>
+        <button class="report-link" onclick="openContact()">📮 不具合・問題の間違いを報告する</button>
     </div>
 
     <div id="online-rank-screen" class="full-overlay" style="display:none;">
@@ -577,6 +610,7 @@
 
     <div id="top-battle-area">
         <div id="tower-floor-tag">🗼 下層</div>
+        <button id="ingame-menu-btn" onclick="openPauseMenu()" aria-label="メニュー">？</button>
         <div id="combo-aura"></div>
 
         <div id="enemy-stage">
@@ -1125,6 +1159,18 @@
 
     // ===== スリープ・アプリ切り替え・横向き: 音を止めてタイマーも一時停止 =====
     let pausedAudios = [];
+    let pauseMenuOpen = false;
+    // ゲーム中の「？」: 一時停止してメニューを出す(報告フォームを開いて戻ってきても、続けるを押すまで止まったまま)
+    function openPauseMenu() {
+        pauseMenuOpen = true;
+        pauseGame();
+        document.getElementById('pause-menu').style.display = 'flex';
+    }
+    function closePauseMenu() {
+        pauseMenuOpen = false;
+        document.getElementById('pause-menu').style.display = 'none';
+        resumeGame();
+    }
     let isPaused = false;
     function isLandscapePhone() { return window.matchMedia('(orientation: landscape) and (max-height: 500px)').matches; }
     function pauseGame() {
@@ -1135,7 +1181,7 @@
         pausedAudios.forEach(a => a.pause());
     }
     function resumeGame() {
-        if (!isPaused || document.hidden || isLandscapePhone()) return;
+        if (!isPaused || document.hidden || isLandscapePhone() || pauseMenuOpen) return;
         isPaused = false;
         pausedAudios.forEach(a => { const p = a.play(); if (p) p.catch(e=>{}); });
         pausedAudios = [];
