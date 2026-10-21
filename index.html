@@ -412,6 +412,10 @@
             #rotate-notice small { font-size: 12.5px; font-weight: bold; color: #c9bff0; }
         }
         @keyframes rotate-hint { 0%,20% { transform: rotate(-90deg); } 60%,100% { transform: rotate(0deg); } }
+        /* スマホ・タブレット(指で操作する端末)は、画面の横幅いっぱいに表示する。パソコンだけ中央に460px幅で表示 */
+        @media (pointer: coarse) {
+            #game-container { max-width: none; }
+        }
     </style>
 </head>
 <body>
