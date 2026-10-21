@@ -399,9 +399,23 @@
             .choice-btn { padding: 9px 14px; min-height: 42px; font-size: 14px; }
             #event-banner { margin-bottom: 5px; padding: 3px 10px; }
         }
+        /* ===== スマホを横向きにした時は「縦向きにしてね」を表示(ゲームは裏で一時停止) ===== */
+        #rotate-notice { display: none; }
+        @media (orientation: landscape) and (max-height: 500px) {
+            #rotate-notice {
+                display: flex; position: fixed; inset: 0; z-index: 99999;
+                flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+                background: radial-gradient(ellipse at center, #2b2350 0%, #140f24 100%);
+                color: #fff; font-weight: 900; font-size: 18px; text-align: center;
+            }
+            #rotate-notice .rotate-icon { font-size: 54px; animation: rotate-hint 1.8s ease-in-out infinite; }
+            #rotate-notice small { font-size: 12.5px; font-weight: bold; color: #c9bff0; }
+        }
+        @keyframes rotate-hint { 0%,20% { transform: rotate(-90deg); } 60%,100% { transform: rotate(0deg); } }
     </style>
 </head>
 <body>
+    <div id="rotate-notice"><div class="rotate-icon">📱</div>スマホを縦向きにしてね<small>このゲームは縦画面専用なのだ（タイマーは止まっているよ）</small></div>
 
 <div id="game-container">
     <div id="bonus-pop-up">MAX COMBO BONUS!</div>
@@ -928,18 +942,38 @@
         if (inEventQuiz) return LEVEL_TIME_MS[0]; // ボス撃破のごほうび問題は、レベルに関係なくいつも10秒
         return LEVEL_TIME_MS[Math.min(currentLevel(), LEVEL_TIME_MS.length) - 1];
     }
+    let timerT0 = 0, timerLimit = 0, timerRunning = false, timerPausedAt = 0;
     function stopTimer() {
         clearInterval(timerId);
+        timerRunning = false; timerPausedAt = 0;
         try { sounds.tick.pause(); } catch(e) {}
     }
     function startTimer() {
         stopTimer();
-        const t0 = performance.now();
-        const limit = timeLimitMs();
+        timerT0 = performance.now();
+        timerLimit = timeLimitMs();
+        timerRunning = true;
         // カウントダウン音は10秒分あるので、制限時間が短いレベルでは途中から流して、バーと同時に鳴り終わるようにする
-        try { sounds.tick.currentTime = Math.max(0, 10 - limit / 1000); const p = sounds.tick.play(); if (p) p.catch(e=>{}); } catch(e) {}
-        timerId = setInterval(() => {
-            const time = Math.max(0, 100 - (performance.now() - t0) / limit * 100);
+        try { sounds.tick.currentTime = Math.max(0, 10 - timerLimit / 1000); const p = sounds.tick.play(); if (p) p.catch(e=>{}); } catch(e) {}
+        timerId = setInterval(timerStep, 50);
+    }
+    // スリープ・アプリ切り替え・横向き画面のあいだはタイマーを止め、戻ったら残り時間から再開する
+    function pauseTimer() {
+        if (!timerRunning || timerPausedAt) return;
+        timerPausedAt = performance.now();
+        clearInterval(timerId);
+        try { sounds.tick.pause(); } catch(e) {}
+    }
+    function resumeTimer() {
+        if (!timerRunning || !timerPausedAt) return;
+        timerT0 += performance.now() - timerPausedAt;
+        timerPausedAt = 0;
+        const elapsed = (performance.now() - timerT0) / 1000;
+        try { sounds.tick.currentTime = Math.max(0, 10 - timerLimit / 1000) + elapsed; const p = sounds.tick.play(); if (p) p.catch(e=>{}); } catch(e) {}
+        timerId = setInterval(timerStep, 50);
+    }
+    function timerStep() {
+            const time = Math.max(0, 100 - (performance.now() - timerT0) / timerLimit * 100);
             const bar = document.getElementById('timer-bar');
             bar.style.width = time + "%";
             bar.style.background = time > 60 ? "var(--accent)" : (time > 30 ? "var(--gold)" : "var(--danger)");
@@ -958,8 +992,33 @@
                     updateUI(); checkBattle();
                 }
             }
-        }, 50);
     }
+
+    // ===== スリープ・アプリ切り替え・横向き: 音を止めてタイマーも一時停止 =====
+    let pausedAudios = [];
+    let isPaused = false;
+    function isLandscapePhone() { return window.matchMedia('(orientation: landscape) and (max-height: 500px)').matches; }
+    function pauseGame() {
+        if (isPaused) return;
+        isPaused = true;
+        pauseTimer();
+        pausedAudios = [...Object.values(sounds), titleBgm].filter(a => a && !a.paused && a !== sounds.tick);
+        pausedAudios.forEach(a => a.pause());
+    }
+    function resumeGame() {
+        if (!isPaused || document.hidden || isLandscapePhone()) return;
+        isPaused = false;
+        pausedAudios.forEach(a => { const p = a.play(); if (p) p.catch(e=>{}); });
+        pausedAudios = [];
+        resumeTimer();
+    }
+    function checkPause() { (document.hidden || isLandscapePhone()) ? pauseGame() : resumeGame(); }
+    document.addEventListener('visibilitychange', checkPause);
+    window.addEventListener('pagehide', pauseGame);
+    window.addEventListener('pageshow', checkPause);
+    window.matchMedia('(orientation: landscape) and (max-height: 500px)').addEventListener('change', checkPause);
+    // Androidでホーム画面から開いた場合などは、縦向きに固定できる(できない環境では何もしない)
+    try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('portrait').catch(e=>{}); } catch(e) {}
 
     function updateEnemyLean() {
         const visual = document.getElementById('enemy-visual');
