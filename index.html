@@ -416,6 +416,29 @@
         @media (pointer: coarse) {
             #game-container { max-width: none; }
         }
+        /* ===== タイトル画面で放置するとストーリーが下から上へ流れ、上の方で薄く消えていく ===== */
+        #story-crawl {
+            position: absolute; inset: 0; z-index: 30; overflow: hidden;
+            background: rgba(6,4,20,0.86);
+            opacity: 0; pointer-events: none; transition: opacity 1.2s ease;
+        }
+        /* 文字だけにかける「下から現れて、上の方で薄く消えていく」マスク(暗幕は透けさせない) */
+        .story-mask {
+            position: absolute; inset: 0; overflow: hidden; container-type: size;
+            -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 12%, #000 52%, transparent 88%);
+                    mask-image: linear-gradient(to top, transparent 0%, #000 12%, #000 52%, transparent 88%);
+        }
+        #story-crawl.show { opacity: 1; pointer-events: auto; }
+        #story-text {
+            position: absolute; top: 100%; left: 0; right: 0; padding: 0 28px;
+            color: #ffe9a8; font-size: 17px; font-weight: bold; line-height: 2.1; text-align: center;
+            text-shadow: 0 0 10px rgba(255,190,80,0.55), 0 2px 4px rgba(0,0,0,0.8);
+        }
+        #story-text p { margin: 0 0 1.6em; }
+        #story-text .story-title { font-size: 22px; letter-spacing: 3px; color: #9ff5d0; text-shadow: 0 0 12px rgba(77,255,176,0.7); }
+        #story-text .story-quote { color: #fff; font-size: 18px; }
+        #story-crawl.show #story-text { animation: story-scroll 38s linear forwards; }
+        @keyframes story-scroll { from { transform: translateY(0); } to { transform: translateY(calc(-100cqh - 100%)); } }
     </style>
 </head>
 <body>
@@ -425,6 +448,17 @@
     <div id="bonus-pop-up">MAX COMBO BONUS!</div>
 
     <div id="start-screen" class="full-overlay start-bg">
+        <div id="story-crawl"><div class="story-mask"><div id="story-text">
+            <p class="story-title">― QUIZ TOWER ―</p>
+            <p>むかしむかし、豆知識の国のまんなかに<br>天までとどく「クイズタワー」が<br>そびえていた。</p>
+            <p>塔のてっぺんには<br>世界じゅうの知恵が眠っているという。</p>
+            <p>ところがある日、<br>おそろしい黒竜がてっぺんに住みつき、<br>知恵の光をひとりじめしてしまった。</p>
+            <p>国じゅうの人びとは<br>かんたんな言葉も、計算も、<br>少しずつ忘れていってしまったのだ……。</p>
+            <p>そこで立ち上がったのが<br>ニナだもんなのだ！</p>
+            <p class="story-quote">「100問の豆知識で、<br>塔のてっぺんを目指すのだ！」</p>
+            <p>正解するたびに力がわき、<br>正解をつなげば、闘気は七色にかがやく。</p>
+            <p>さあ、クイズタワーの扉をひらこう――</p>
+        </div></div></div>
         <span id="loading-msg">プログラム読み込み中...</span>
         <div id="err-log"></div>
         <div id="tap-start-badge">タップしてスタート</div>
@@ -1171,6 +1205,32 @@
     }
 
     document.getElementById('start-screen').onclick = startGame;
+
+    // ===== タイトル画面で8秒放置するとストーリーを流す。タップするとストーリーだけ閉じる(ゲームは始めない) =====
+    const STORY_IDLE_MS = 8000;
+    let storyIdleTimer = null;
+    const storyEl = document.getElementById('story-crawl');
+    function titleVisible() {
+        return document.getElementById('start-screen').style.display !== 'none'
+            && document.getElementById('manual-screen').style.display !== 'flex';
+    }
+    function scheduleStory() {
+        clearTimeout(storyIdleTimer);
+        storyIdleTimer = setTimeout(() => { if (titleVisible() && !document.hidden) showStory(); else scheduleStory(); }, STORY_IDLE_MS);
+    }
+    function showStory() {
+        const t = document.getElementById('story-text');
+        storyEl.classList.remove('show'); void t.offsetWidth; // アニメーションを最初から
+        storyEl.classList.add('show');
+    }
+    function hideStory() {
+        storyEl.classList.remove('show');
+        scheduleStory();
+    }
+    document.getElementById('story-text').addEventListener('animationend', hideStory);
+    storyEl.addEventListener('click', (e) => { e.stopPropagation(); hideStory(); });
+    document.getElementById('start-screen').addEventListener('pointerdown', () => { if (!storyEl.classList.contains('show')) scheduleStory(); });
+    scheduleStory();
     document.getElementById('btn-mochi').onclick = function() {
         if(mochi > 0 && hp < 100) { mochi--; hp = Math.min(hp + 50, 100); sounds.heal.play().catch(e=>{}); updateUI();
             // 困った・やばい顔のときに回復したら、HPに合ったポーズに戻す
