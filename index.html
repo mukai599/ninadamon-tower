@@ -394,7 +394,7 @@
     <div id="manual-screen" class="full-overlay" style="display:none;">
         <h2 class="result-title">📖 あそびかた</h2>
         <div class="manual-card"><b>🎯 クイズに答えよう</b><span>問題を読んで、A・B・Cの3つから正しい答えをタップするのだ。答えたあとは解説が出るので、画面をタップすると次の問題に進むのだ。</span></div>
-        <div class="manual-card"><b>⏱️ 時間制限</b><span>問題の上のバーが残り時間なのだ。緑→黄→赤と変わり、なくなると不正解と同じ扱いになるのだ。</span></div>
+        <div class="manual-card"><b>⏱️ 時間制限</b><span>問題の上のバーが残り時間なのだ。緑→黄→赤と変わり、なくなると不正解と同じ扱いになるのだ。黒竜を倒すたびにレベルが上がって、制限時間が10秒→8秒→6.5秒→5秒と短くなるのだ。</span></div>
         <div class="manual-card"><b>❤️ HPゲージ</b><span>ニナだもんの頭の上がニナだもんのHP、敵の下が敵のHPなのだ。正解すると敵に、不正解だとニナだもんにダメージが入るのだ。</span></div>
         <div class="manual-card"><b>💊 回復ボタン</b><span>左上の「回復」をタップするとHPが回復するのだ。1ゲームで3回まで使えるのだ。</span></div>
         <div class="manual-card"><b>🔥 コンボと闘気</b><span>連続で正解するとコンボになり、点数が増えるのだ。コンボが続くと、ニナだもんの闘気が赤→オレンジ→黄→緑→青→藍→紫と変わっていくのだ。</span></div>
@@ -657,6 +657,13 @@
         setTimeout(() => { img.classList.remove('zunda-pop'); img.classList.add('zunda-idle'); }, 350);
     }
 
+    // 問題を考えている時のポーズはHPで変わる: 通常は「考える」、HP60以下は「困った」、HP30以下は「やばい」
+    function idlePose() {
+        if (hp <= 30) return "images/anim_pinch.gif";
+        if (hp <= 60) return "images/anim_nervous.gif";
+        return "images/anim_think.gif";
+    }
+
     const AURA_POSES = ['aura_1_red','aura_2_orange','aura_3_yellow','aura_4_green','aura_5_blue','aura_6_indigo','aura_7_purple'];
     function showAttackPose() {
         if (streak < 2) { popZunda("images/gemini_zunda_ready.png"); return; }
@@ -686,18 +693,19 @@
     let currentFloor = null;
     function updateTowerFloor(type) {
         updateMapVariant(type);
+        const lv = currentLevel();
+        document.getElementById('tower-floor-tag').innerText =
+            '🗼 ' + (type === 'mid' ? '中層' : type === 'boss' ? '最上階' : '下層') + (lv > 1 ? '  Lv.' + lv : '');
         if (type === currentFloor) return;
         currentFloor = type;
         const area = document.getElementById('top-battle-area');
         const uiArea = document.getElementById('bottom-ui-area');
-        const tag = document.getElementById('tower-floor-tag');
         area.classList.remove('tower-mid', 'tower-boss');
         uiArea.classList.remove('tower-mid', 'tower-boss');
-        if (type === 'mid') { area.classList.add('tower-mid'); uiArea.classList.add('tower-mid'); tag.innerText = '🗼 中層'; }
+        if (type === 'mid') { area.classList.add('tower-mid'); uiArea.classList.add('tower-mid'); }
         else if (type === 'boss') {
-            area.classList.add('tower-boss'); uiArea.classList.add('tower-boss'); tag.innerText = '🗼 最上階';
+            area.classList.add('tower-boss'); uiArea.classList.add('tower-boss');
         }
-        else { tag.innerText = '🗼 下層'; }
     }
 
     function loadQuiz() {
@@ -727,10 +735,10 @@
             popZunda("images/anim_fight_once.gif?t=" + Date.now());
             const qn = questionNum;
             setTimeout(() => {
-                if (questionNum === qn && document.getElementById('main-illust').src.includes('anim_fight_once')) popZunda("images/anim_think.gif");
+                if (questionNum === qn && document.getElementById('main-illust').src.includes('anim_fight_once')) popZunda(idlePose());
             }, 2600);
         } else {
-            popZunda("images/anim_think.gif");
+            popZunda(idlePose());
         }
         const qbox = document.getElementById('question-box');
         qbox.classList.remove('explain-mode');
@@ -819,7 +827,7 @@
 
         document.getElementById('event-banner').style.display = 'block';
         document.getElementById('question-box').classList.add('event-question');
-        popZunda("images/anim_think.gif");
+        popZunda(idlePose());
         document.getElementById('question-box').innerText = q.q;
         const container = document.getElementById('choices');
         container.innerHTML = "";
@@ -871,7 +879,10 @@
     }
 
     // カウントダウン音(se_tick.mp3)は「0.2秒ごとのカチッ」が10秒続く1本の音。問題が出た時に1回だけ頭から流し、バーも同じ10秒で減らす
-    const TIME_LIMIT_MS = 10000;
+    // レベル: 黒竜を倒すごとに1つ上がり、制限時間が短くなる(Lv.1=10秒 → Lv.2=8秒 → Lv.3=6.5秒 → Lv.4以降=5秒)
+    const LEVEL_TIME_MS = [10000, 8000, 6500, 5000];
+    function currentLevel() { return 1 + Math.floor(defCount / 10); }
+    function timeLimitMs() { return LEVEL_TIME_MS[Math.min(currentLevel(), LEVEL_TIME_MS.length) - 1]; }
     function stopTimer() {
         clearInterval(timerId);
         try { sounds.tick.pause(); } catch(e) {}
@@ -879,9 +890,11 @@
     function startTimer() {
         stopTimer();
         const t0 = performance.now();
-        try { sounds.tick.currentTime = 0; const p = sounds.tick.play(); if (p) p.catch(e=>{}); } catch(e) {}
+        const limit = timeLimitMs();
+        // カウントダウン音は10秒分あるので、制限時間が短いレベルでは途中から流して、バーと同時に鳴り終わるようにする
+        try { sounds.tick.currentTime = Math.max(0, 10 - limit / 1000); const p = sounds.tick.play(); if (p) p.catch(e=>{}); } catch(e) {}
         timerId = setInterval(() => {
-            const time = Math.max(0, 100 - (performance.now() - t0) / TIME_LIMIT_MS * 100);
+            const time = Math.max(0, 100 - (performance.now() - t0) / limit * 100);
             const bar = document.getElementById('timer-bar');
             bar.style.width = time + "%";
             bar.style.background = time > 60 ? "var(--accent)" : (time > 30 ? "var(--gold)" : "var(--danger)");
@@ -956,7 +969,8 @@
             visual.classList.add('enemy-defeat-anim');
             updateUI();
             const b = document.getElementById('bonus-pop-up');
-            b.innerText = "撃破！\nHPボーナス:+" + hb + "\nもちボーナス:+" + mb + "\n計+" + tb + "点！";
+            b.innerText = "撃破！\nHPボーナス:+" + hb + "\nもちボーナス:+" + mb + "\n計+" + tb + "点！"
+                + (wasBoss ? "\n\n⚡ LEVEL UP! Lv." + currentLevel() + " ⚡\n制限時間 " + (timeLimitMs() / 1000) + "秒に！" : "");
             b.style.display = "block";
             setTimeout(() => {
                 b.style.display = "none";
@@ -971,7 +985,7 @@
 
     function showVictory() {
         const v = document.getElementById('victory-pop');
-        v.innerHTML = '<img src="images/anim_victory.gif">';
+        v.innerHTML = '<img src="images/anim_boss_win.gif">';
         v.style.display = 'block';
         v.classList.remove('zunda-pop'); void v.offsetWidth; v.classList.add('zunda-pop');
         setTimeout(() => { v.style.display = 'none'; }, 2100);
@@ -1049,7 +1063,10 @@
 
     document.getElementById('start-screen').onclick = startGame;
     document.getElementById('btn-mochi').onclick = function() {
-        if(mochi > 0 && hp < 100) { mochi--; hp = Math.min(hp + 50, 100); sounds.heal.play().catch(e=>{}); updateUI(); }
+        if(mochi > 0 && hp < 100) { mochi--; hp = Math.min(hp + 50, 100); sounds.heal.play().catch(e=>{}); updateUI();
+            // 困った・やばい顔のときに回復したら、HPに合ったポーズに戻す
+            const cur = document.getElementById('main-illust').src;
+            if (/anim_(nervous|pinch)/.test(cur) && !cur.includes(idlePose().split('/').pop())) popZunda(idlePose()); }
     };
     renderEnemy(enemyIndex);
     document.getElementById('loading-msg').style.display = 'none';
