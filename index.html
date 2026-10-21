@@ -567,7 +567,7 @@
     // ===== イベントクイズ(敵を10体倒すごとに出現、正解でアイテム獲得) =====
     const eventQuizData = [
         {q:"★イベント★ニナだもんが登っている塔の名前は？",c:["クイズタワー","スカイツリー","バベルの塔"],a:0},
-        {q:"★イベント★このゲームの雑魚モンスターは全部で何種類？",c:["5種類","10種類","15種類"],a:1},
+        {q:"★イベント★このゲームの雑魚モンスターは全部で何種類？",c:["5種類","9種類","15種類"],a:1},
         {q:"★イベント★1時間は何分？",c:["60分","100分","24分"],a:0},
         {q:"★イベント★1週間は何日？",c:["5日","7日","10日"],a:1},
         {q:"★イベント★虹は一般的に何色？",c:["5色","7色","9色"],a:1},
@@ -740,6 +740,7 @@
 
         inEventQuiz = false;
         if (pendingEventQuiz) { pendingEventQuiz = false; loadEventQuiz(); return; }
+        clearEventBanner();
 
         let type = (defCount >= 10) ? "boss" : (defCount >= 4) ? "mid" : "weak";
         let pool = currentPool[type];
@@ -862,24 +863,39 @@
             btn.className = "choice-btn"; btn.innerText = choice;
             btn.onclick = () => {
                 stopTimer();
-                document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
-                document.getElementById('event-banner').style.display = 'none';
-                document.getElementById('question-box').classList.remove('event-question');
-                if (i === q.a) {
-                    btn.classList.add('correct-flash');
-                    itemCount++;
-                    sounds.ok.play().catch(e=>{});
-                    updateUI();
-                    showItemGet();
-                } else {
-                    btn.classList.add('wrong-flash');
-                    sounds.ng.play().catch(e=>{});
-                }
-                setTimeout(loadQuiz, 1300);
+                if (i !== q.a) btn.classList.add('wrong-flash');
+                finishEventQuiz(i === q.a, false);
             };
             container.appendChild(btn);
         });
+        currentEventQuestion = q;
         startTimer();
+    }
+
+    let currentEventQuestion = null;
+    // ごほうび問題の結果: 正解ならアイテム+1、不正解・時間切れなら正解を見せて「アイテムならず」と伝える
+    function finishEventQuiz(correct, timeout) {
+        const q = currentEventQuestion;
+        lockChoices();
+        document.querySelectorAll('#choices .choice-btn').forEach((b, idx) => { b.disabled = true; if (idx === q.a) b.classList.add('correct-flash'); });
+        clearEventBanner();
+        const b = document.getElementById('bonus-pop-up');
+        if (correct) {
+            itemCount++;
+            sounds.ok.play().catch(e=>{});
+            updateUI();
+            showItemGet();
+        } else {
+            sounds.ng.play().catch(e=>{});
+            b.innerText = (timeout ? "時間切れ…" : "ざんねん！") + "\nアイテムならず\n正解は「" + q.c[q.a] + "」";
+            b.style.display = "block";
+            setTimeout(() => { b.style.display = "none"; }, 1500);
+        }
+        setTimeout(loadQuiz, correct ? 1300 : 1700);
+    }
+    function clearEventBanner() {
+        document.getElementById('event-banner').style.display = 'none';
+        document.getElementById('question-box').classList.remove('event-question');
     }
 
     function showItemGet() {
@@ -908,7 +924,10 @@
     // レベル: 黒竜を倒すごとに1つ上がり、制限時間が短くなる(Lv.1=10秒 → Lv.2=8秒 → Lv.3=6.5秒 → Lv.4以降=5秒)
     const LEVEL_TIME_MS = [10000, 8000, 6500, 5000];
     function currentLevel() { return 1 + Math.floor(defCount / 10); }
-    function timeLimitMs() { return LEVEL_TIME_MS[Math.min(currentLevel(), LEVEL_TIME_MS.length) - 1]; }
+    function timeLimitMs() {
+        if (inEventQuiz) return LEVEL_TIME_MS[0]; // ボス撃破のごほうび問題は、レベルに関係なくいつも10秒
+        return LEVEL_TIME_MS[Math.min(currentLevel(), LEVEL_TIME_MS.length) - 1];
+    }
     function stopTimer() {
         clearInterval(timerId);
         try { sounds.tick.pause(); } catch(e) {}
@@ -926,6 +945,7 @@
             bar.style.background = time > 60 ? "var(--accent)" : (time > 30 ? "var(--gold)" : "var(--danger)");
             if(time <= 0) {
                 stopTimer();
+                if (inEventQuiz) { finishEventQuiz(false, true); return; } // ごほうび問題の時間切れはHPを減らさない
                 checkComboBonus();
                 streak = 0; maxStreakThisTurn = 0; hp -= 20;
                 lockChoices();
