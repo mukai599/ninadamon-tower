@@ -42,7 +42,8 @@
         /* ===== バトルエリア ===== */
         #top-battle-area {
             background: url('images/tower_weak.jpg') center / cover no-repeat;
-            flex: 0 0 auto; height: 320px;
+            /* 背の高い画面では320px。短い画面では下の問題・選択肢が全部見えるように自動で縮む(最小150px) */
+            flex: 0 1 320px; min-height: 150px; container-type: size;
             padding: 18px 16px 14px; display: flex; flex-direction: column;
             align-items: center; justify-content: center; position: relative; gap: 6px; overflow: hidden;
         }
@@ -63,7 +64,7 @@
             position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; opacity: 0; transition: 0.5s; z-index: 1;
             background: radial-gradient(circle, rgba(150,255,210,0.4) 0%, rgba(100,190,255,0.3) 30%, rgba(190,130,255,0.25) 55%, rgba(255,120,200,0.18) 75%, rgba(255,105,61,0) 90%);
         }
-        #victory-pop { position:absolute; left:50%; top:50%; width:210px; margin-left:-105px; margin-top:-105px; z-index:50; display:none; pointer-events:none; }
+        #victory-pop { position:absolute; left:50%; top:50%; width:min(210px, 90cqh); margin-left:calc(min(210px, 90cqh) / -2); margin-top:calc(min(210px, 90cqh) / -2); z-index:50; display:none; pointer-events:none; }
         #victory-pop img { width:100%; display:block; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.45)); }
         @keyframes aura-flicker { 0%{ opacity:0.65; } 100%{ opacity:1; } }
         @keyframes aurora-hue { 0%{ filter:hue-rotate(0deg); } 100%{ filter:hue-rotate(360deg); } }
@@ -72,8 +73,9 @@
         #enemy-stage { display:flex; flex-direction:column; align-items:center; gap:4px; z-index:6; }
         #enemy-name-tag { font-size:12px; font-weight:bold; color:var(--sub-ink); background:rgba(255,255,255,0.8); padding:2px 12px; border-radius:20px; }
         #enemy-name-tag.boss-tag { background: linear-gradient(90deg, #ffe08a, #d9a528); color:#4a3200; font-weight:900; }
-        #enemy-visual-wrap { position:relative; width:150px; height:150px; display:flex; align-items:center; justify-content:center; transition: width 0.3s, height 0.3s; }
-        #enemy-visual-wrap.boss-size { width:200px; height:200px; }
+        /* 敵の大きさはバトル画面の高さに合わせて縮む(名前とHPバーの分 80px を残す) */
+        #enemy-visual-wrap { position:relative; width:min(150px, calc(100cqh - 80px)); height:min(150px, calc(100cqh - 80px)); display:flex; align-items:center; justify-content:center; transition: width 0.3s, height 0.3s; }
+        #enemy-visual-wrap.boss-size { width:min(200px, calc(100cqh - 80px)); height:min(200px, calc(100cqh - 80px)); }
         #enemy-visual-wrap::after { content:""; position:absolute; bottom:4px; width:70px; height:14px; background:rgba(0,0,0,0.12); border-radius:50%; filter:blur(3px); z-index:-1; }
         #enemy-visual { width:100%; height:100%; transform-origin:center; transition: transform 0.4s ease-out; }
         .enemy-hp-wrap { width:140px; }
@@ -89,7 +91,7 @@
             display:flex; flex-direction:column; align-items:center; gap:3px;
         }
         #main-illust {
-            width:175px; height:175px; object-fit:contain; object-position:bottom;
+            width:min(175px, calc(100cqh - 30px)); height:min(175px, calc(100cqh - 30px)); object-fit:contain; object-position:bottom;
             background:none; border:none; transition: transform 0.25s ease-out;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
         }
@@ -105,7 +107,7 @@
 
         /* ===== 下部UIエリア ===== */
         #bottom-ui-area {
-            flex: 1; background: url('images/map_weak.jpg') center / cover no-repeat;
+            flex: 1 0 auto; background: url('images/map_weak.jpg') center / cover no-repeat;
             padding: 12px 16px 14px; z-index: 20; display: flex; flex-direction: column;
             border-top: 1px solid rgba(0,0,0,0.05);
             min-height: 0; position: relative;
@@ -190,7 +192,7 @@
 
         #next-prompt {
             text-align: center; font-size: 12.5px; font-weight: bold; color: var(--sub-ink);
-            margin-top: 10px; display: none; cursor: pointer;
+            margin-top: 10px; visibility: hidden; cursor: pointer; /* 場所は常に確保して、表示のたびにレイアウトがずれないようにする */
         }
 
         .full-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.98); z-index:2000; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; box-sizing:border-box; }
@@ -219,9 +221,15 @@
             font-size: 11px; color: rgba(255,255,255,0.9); text-shadow: 0 1px 2px rgba(0,0,0,0.5);
             background: rgba(0,0,0,0.25); padding: 3px 12px; border-radius: 10px;
         }
-        /* 掲示板と？アイコンを横に並べた帯。位置はJS(placeTitleHud)でロゴのすぐ上に合わせる */
+        /* 掲示板と？アイコンを横に並べた帯を、どの機種でもロゴのすぐ上に置く(CSSだけで計算)。
+           タイトル画像(1024x1820)はcover表示なので、表示される画像の高さ = max(画面の高さ, 画面の幅×1.7773)。
+           ロゴは画像の上から18%の位置 → ロゴの上端 = 画面の高さ/2 − 画像の高さ×0.32。
+           そこから帯の高さ(36px)+すき間(10px)だけ上に置き、ノッチ・時計の帯(safe-area)より下には必ず来るようにする */
+        #start-screen { container-type: size; }
         #title-hud {
-            position: absolute; left: 10px; right: 10px; top: 60px; z-index: 10;
+            position: absolute; left: 10px; right: 10px; z-index: 10;
+            top: 60px; /* 古いブラウザ用 */
+            top: max(calc(env(safe-area-inset-top) + 8px), calc(50cqh - 0.32 * max(100cqh, 177.73cqw) - 46px));
             display: flex; align-items: center; gap: 8px;
         }
         #notice-board {
@@ -380,6 +388,17 @@
         @keyframes enemy-spawn { 0%{ transform:scale(0.3) translateY(20px); opacity:0; } 70%{ transform:scale(1.1) translateY(-4px); opacity:1; } 100%{ transform:scale(1) translateY(0); opacity:1; } }
         .enemy-idle { animation: enemy-idle 2.6s ease-in-out infinite; }
         @keyframes enemy-idle { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-4px); } }
+        /* ===== 縦の短い画面(iPhone SE・小型Androidのブラウザ表示など)では、下の問題エリアの余白を詰める ===== */
+        @media (max-height: 640px) {
+            #bottom-ui-area { padding: 8px 14px 10px; }
+            .top-row { margin-bottom: 4px; }
+            #timer-bg { margin: 5px 0; }
+            #question-box { padding: 10px 14px; min-height: 58px; margin-bottom: 9px; font-size: 15px; line-height: 1.4; }
+            #question-sub { margin-bottom: 3px; }
+            .choice-grid { gap: 6px; }
+            .choice-btn { padding: 9px 14px; min-height: 42px; font-size: 14px; }
+            #event-banner { margin-bottom: 5px; padding: 3px 10px; }
+        }
     </style>
 </head>
 <body>
@@ -630,25 +649,6 @@
     let hp = 100, eHp = 100, score = 0, mochi = 3, streak = 0, defCount = 0, totalCorrect = 0, totalWrong = 0, maxStreakThisTurn = 0, questionNum = 0;
     let timerId = null, currentPool = JSON.parse(JSON.stringify(masterQuizData));
 
-    // タイトル画像(1024x1820, cover表示)のロゴは画像の上から約18%の位置。画面サイズからその位置を計算し、
-    // 掲示板と？アイコンの帯をロゴのすぐ上に置く(スマホ上部の時計・ノッチの帯には重ならないようにする)
-    function placeTitleHud() {
-        const scr = document.getElementById('start-screen'), hud = document.getElementById('title-hud');
-        if (!scr || !hud) return;
-        const W = scr.clientWidth, H = scr.clientHeight;
-        const imgH = Math.max(H, W * 1820 / 1024);
-        const logoTop = imgH * 0.18 - (imgH - H) / 2;
-        const probe = document.createElement('div');
-        probe.style.cssText = 'position:absolute;visibility:hidden;padding-top:env(safe-area-inset-top);';
-        document.body.appendChild(probe);
-        const safeTop = parseFloat(getComputedStyle(probe).paddingTop) || 0;
-        probe.remove();
-        hud.style.top = Math.max(safeTop + 8, logoTop - hud.offsetHeight - 10) + 'px';
-    }
-    placeTitleHud();
-    window.addEventListener('resize', placeTitleHud);
-    window.addEventListener('orientationchange', () => setTimeout(placeTitleHud, 300));
-
     function openManual() { document.getElementById('manual-screen').style.display = 'flex'; }
     function closeManual() { document.getElementById('manual-screen').style.display = 'none'; }
 
@@ -831,10 +831,10 @@
         qbox.classList.add('explain-mode');
         qbox.innerHTML = '<img class="explain-avatar" src="images/avatar_face.png"><span class="explain-text">' + (q.e || ('正解は「' + q.c[q.a] + '」なのだ！')) + '</span>';
         const prompt = document.getElementById('next-prompt');
-        prompt.style.display = 'block';
+        prompt.style.visibility = 'visible';
         const choicesEl = document.getElementById('choices');
         const advance = () => {
-            prompt.style.display = 'none';
+            prompt.style.visibility = 'hidden';
             choicesEl.removeEventListener('click', advance);
             prompt.removeEventListener('click', advance);
             proceedFn();
