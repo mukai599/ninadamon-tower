@@ -461,6 +461,13 @@
             background: linear-gradient(90deg, #ffe08a, #d9a528); color: #4a3200; font-size: 12px; font-weight: 900;
             box-shadow: 0 0 12px rgba(255,214,102,0.6);
         }
+        /* お問い合わせ */
+        .contact-card .contact-btn {
+            display: block; width: 100%; margin-top: 8px; padding: 10px; border: none; border-radius: 12px; cursor: pointer;
+            background: linear-gradient(90deg, #5cb584, #3f9a6a); color: #fff; font-weight: bold; font-size: 14px;
+        }
+        #contact-note { font-size: 11.5px; color: #b0533c; margin-top: 6px; display: none; }
+        .app-version { display: block; margin-top: 6px; font-size: 10px; color: #999; text-align: right; }
     </style>
 </head>
 <body>
@@ -503,6 +510,11 @@
         <div class="manual-card"><b>🗼 塔を登る</b><span>敵を5体倒すたびに1階ずつ塔を登っていくのだ。上の階ほど問題も難しくなって、最上階のボスを倒せば100問完全制覇なのだ。</span></div>
         <div class="manual-card"><b>⭐ スコアとランキング</b><span>上の段にSCOREと撃破数(💀)が出るのだ。ゲーム終了後は全国ランキングにも登録できるのだ。</span></div>
         <div class="manual-card"><b>📝 クレジット</b><span>音声：VOICEVOX:ずんだもん</span></div>
+        <div class="manual-card contact-card"><b>📮 お問い合わせ</b><span>動かない・表示がおかしい・問題の答えが間違っている…などに気づいたら、こちらから教えてほしいのだ。</span>
+            <button class="contact-btn" onclick="openContact()">📮 お問い合わせ・不具合の報告</button>
+            <div id="contact-note"></div>
+            <small class="app-version">QUIZ TOWER <span id="app-version-label"></span></small>
+        </div>
         <button class="big-btn" onclick="closeManual()" style="margin-top:8px;">閉じる</button>
     </div>
 
@@ -750,6 +762,30 @@
     let hp = 100, eHp = 100, score = 0, mochi = 3, streak = 0, defCount = 0, totalCorrect = 0, totalWrong = 0, maxStreakThisTurn = 0, questionNum = 0;
     let timerId = null, currentPool = JSON.parse(JSON.stringify(masterQuizData));
     let missedPool = []; // まちがえた問題(全部の問題を使い切ったあと、もう一度出題する)
+
+    // ===== お問い合わせ(Googleフォーム) =====
+    // フォームの「事前入力したURL」をここに入れる。DEVICE_INFO / GAME_STATE の部分を自動で機種情報・進み具合に置き換えて開く
+    const APP_VERSION = '1.0.0';
+    const CONTACT_FORM_URL = ''; // 例: 'https://docs.google.com/forms/d/e/xxxx/viewform?usp=pp_url&entry.111=DEVICE_INFO&entry.222=GAME_STATE'
+    document.getElementById('app-version-label').innerText = 'v' + APP_VERSION;
+    function contactInfo() {
+        const ua = navigator.userAgent;
+        const os = /iPhone|iPad|iPod/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android' : /Mac/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : 'その他';
+        const browser = /CriOS|Chrome/.test(ua) ? 'Chrome' : /Safari/.test(ua) ? 'Safari' : /Firefox|FxiOS/.test(ua) ? 'Firefox' : 'その他';
+        const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone ? 'ホーム画面から起動' : 'ブラウザ';
+        const device = os + ' / ' + browser + ' / ' + standalone + ' / 画面 ' + window.innerWidth + 'x' + window.innerHeight + ' / v' + APP_VERSION;
+        const state = (typeof defCount !== 'undefined' && document.getElementById('start-screen').style.display === 'none')
+            ? ('撃破' + defCount + '体 / 正解' + totalCorrect + '問 / Lv.' + currentLevel() + ' / HP' + hp)
+            : 'タイトル画面から';
+        return { device, state };
+    }
+    function openContact() {
+        const note = document.getElementById('contact-note');
+        if (!CONTACT_FORM_URL) { note.innerText = 'お問い合わせ窓口はただいま準備中なのだ。もう少し待ってほしいのだ！'; note.style.display = 'block'; return; }
+        const info = contactInfo();
+        const url = CONTACT_FORM_URL.replace('DEVICE_INFO', encodeURIComponent(info.device)).replace('GAME_STATE', encodeURIComponent(info.state));
+        window.open(url, '_blank');
+    }
 
     function openManual() { document.getElementById('manual-screen').style.display = 'flex'; }
     function closeManual() { document.getElementById('manual-screen').style.display = 'none'; }
