@@ -889,7 +889,9 @@
     let voicePreloadStarted = false;
     function preloadVoices() {
         if (voicePreloadStarted || !USE_VOICE_BUFFERS) return; voicePreloadStarted = true;
-        const queue = VOICE_NAMES.slice();
+        // よく使う声から先に読み込む(タイトルのあいさつ → 正解 → コンボ → まちがい …)
+        const first = ['hime_title1', 'title_2'].concat(VOICE_GROUPS.himeOk, VOICE_GROUPS.comboA, VOICE_GROUPS.miss);
+        const queue = first.concat(VOICE_NAMES.filter(n => !first.includes(n)));
         const next = () => { const n = queue.shift(); if (n) loadVoice(n).then(next); };
         for (let k = 0; k < 3; k++) next();
     }
@@ -1098,7 +1100,9 @@
     function titleGreeting() {
         if (titleVoicePlayed || gameStarted) return;
         titleVoicePlayed = true;
-        playVoiceLater('hime_title1', 300); playVoiceLater('title_2', 2800);
+        // 通信が遅くて声の読み込みが間に合わない時は、読み込めた時点で鳴らす(ゲームが始まっていたら鳴らさない)
+        const whenReady = (n, ms) => voiceTimers.push(setTimeout(() => loadVoice(n).then(() => { if (!gameStarted) playVoice(n); }), ms));
+        whenReady('hime_title1', 300); whenReady('title_2', 2800);
     }
     function startTitleBgm() {
         if (gameStarted || !titleBgm.paused) return;
