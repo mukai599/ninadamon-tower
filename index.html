@@ -535,6 +535,23 @@
         .adv-card.unlocked img { filter: none; }
         /* 冒険(各編)モード中は全国ランキングを出さない(本編のスコアとまざらないように) */
         body.genre-mode .online-rank-btn { display: none !important; }
+        /* ===== 称号と「あと何個」 ===== */
+        #adventure-btn .next-pill { display: block; font-size: 10.5px; color: #ffe9a8; margin-top: 2px; font-weight: bold; }
+        #adventure-btn .next-pill:empty { display: none; }
+        .rt-bar { height: 8px; background: rgba(255,255,255,0.15); border-radius: 5px; overflow: hidden; margin: 6px 0 4px; }
+        .rt-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #ffda44, #ff9d3d); border-radius: 5px; transition: width 0.8s ease; }
+        .rank-title-box { width: 88%; margin: 6px 0 10px; padding: 10px 14px; border-radius: 16px; background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,218,68,0.6); text-align: center; }
+        .rank-title-box .rt-label { font-size: 11px; color: #c9bff0; }
+        .rank-title-box .rt-name { font-size: 20px; font-weight: 900; color: #ffe08a; text-shadow: 0 0 10px rgba(255,214,102,0.6); }
+        .rank-title-box .rt-next { font-size: 11.5px; color: #fff; }
+        .rank-title-box .rt-up { display: none; font-size: 13px; font-weight: 900; color: #4dffb0; animation: rt-pulse 0.6s infinite alternate; }
+        @keyframes rt-pulse { from { opacity: 0.6; } to { opacity: 1; text-shadow: 0 0 10px rgba(77,255,176,0.9); } }
+        .rank-title-box.ranked-up { border-color: #4dffb0; box-shadow: 0 0 18px rgba(77,255,176,0.5); }
+        .rank-title-box.ranked-up .rt-up { display: block; }
+        .adv-progress { background: rgba(255,255,255,0.07); border-radius: 12px; padding: 8px 10px; margin-bottom: 8px; text-align: left; }
+        .adv-progress-text { font-size: 12px; font-weight: bold; color: #ffe9a8; }
+        .adv-rank { font-size: 12px; color: #c9bff0; margin-bottom: 10px; text-align: left; }
+        .adv-rank b { color: #ffe08a; }
     </style>
 </head>
 <body>
@@ -558,7 +575,7 @@
         <span id="loading-msg">プログラム読み込み中...</span>
         <div id="err-log"></div>
         <div id="clear-badge"></div>
-        <button id="adventure-btn" onclick="event.stopPropagation(); openAdventureMenu();">📚 冒険を選ぶ <span class="gem-pill">💎 <span id="title-gems">0</span></span></button>
+        <button id="adventure-btn" onclick="event.stopPropagation(); openAdventureMenu();">📚 冒険を選ぶ <span class="gem-pill">💎 <span id="title-gems">0</span></span><span id="title-next" class="next-pill"></span></button>
         <div id="tap-start-badge">タップしてスタート</div>
         <div id="tap-start-catch">100問の豆知識で、塔のてっぺんを目指すのだ！</div>
         <div id="title-hud">
@@ -573,7 +590,9 @@
                 <div class="adv-title">📚 冒険を選ぶのだ</div>
                 <div class="adv-treasury">💎 宝物庫 <b id="adv-gems">0</b>個</div>
             </div>
-            <p class="adv-help">ボスを倒したあとのイベントクイズに正解すると💎が宝物庫に貯まるのだ。💎<span class="adv-cost-label"></span>個で、好きな冒険を1つ解放できるのだ！</p>
+            <p class="adv-help">ボスを倒したあとのイベントクイズに正解すると💎が宝物庫に貯まるのだ。冒険を解放するには💎が必要で、1つ目は5個・2つ目は10個・3つ目は15個なのだ！</p>
+            <div class="adv-progress"><div class="adv-progress-text" id="adv-progress-text"></div><div class="rt-bar"><div class="rt-fill" id="adv-progress-fill"></div></div></div>
+            <div class="adv-rank" id="adv-rank"></div>
             <div id="adv-list"></div>
             <div id="adv-menu-toast"></div>
             <button class="big-btn" onclick="closeAdventureMenu()" style="margin-top:10px;">とじる</button>
@@ -599,7 +618,7 @@
         <div class="manual-card"><b>🔥 コンボと闘気</b><span>連続で正解するとコンボになり、点数が増えるのだ。コンボが続くと、ニナだもんの闘気が赤→オレンジ→黄→緑→青→藍→紫と変わっていくのだ。</span></div>
         <div class="manual-card"><b>🐉 ボス戦</b><span>5体目ごとにボスが出るのだ。キングスライム、氷の女王スライム、炎の鬼、漆黒の騎士ゴーレム…そして25体目、最上階には黒竜が待っているのだ。倒すとイベントクイズが出て、正解するとアイテム(💎)がもらえるのだ。</span></div>
         <div class="manual-card"><b>🗼 塔を登る</b><span>敵を5体倒すたびに1階ずつ塔を登っていくのだ。上の階ほど問題も難しくなって、最上階のボスを倒せば100問完全制覇なのだ。</span></div>
-        <div class="manual-card"><b>💎 宝物庫と新しい冒険</b><span>ボスのあとのイベントクイズに正解すると、💎が宝物庫に貯まっていくのだ。ゲームオーバーになっても💎は消えないのだ。💎3個で「歴史編」「科学編」「文学編」から好きな冒険を1つ解放できるのだ。100問制覇すると💎3個のボーナスももらえるのだ！</span></div>
+        <div class="manual-card"><b>💎 宝物庫と新しい冒険</b><span>ボスのあとのイベントクイズに正解すると、💎が宝物庫に貯まっていくのだ。ゲームオーバーになっても💎は消えないのだ。「歴史編」「科学編」「文学編」は💎で解放できて、1つ目は5個・2つ目は10個・3つ目は15個必要なのだ。100問制覇すると💎3個のボーナスももらえるのだ。集めた💎の合計で、見習い冒険者→塔の挑戦者→塔の勇者→クイズマスター→伝説の賢者と称号も上がっていくのだ！</span></div>
         <div class="manual-card"><b>⭐ スコアとランキング</b><span>上の段にSCOREと撃破数(💀)が出るのだ。ゲーム終了後は全国ランキングにも登録できるのだ。</span></div>
         <div class="manual-card"><b>📝 クレジット</b><span>音声：VOICEVOX:ずんだもん</span></div>
         <div class="manual-card contact-card"><b>📮 お問い合わせ</b><span>動かない・表示がおかしい・問題の答えが間違っている…などに気づいたら、こちらから教えてほしいのだ。</span>
@@ -614,6 +633,7 @@
         <img src="images/gemini_zunda_dead.png" id="game-over-img">
         <h2 class="result-title">✨ 結果発表なのだ！ ✨</h2>
         <div style="font-size:40px; font-weight:bold; color:var(--gold); margin:5px 0; text-shadow:0 0 16px rgba(255,214,102,0.5);"><span id="final-score">0</span>点</div>
+        <div class="rank-title-box" id="result-rank-box"><div class="rt-up">🎉 称号アップ！</div><div class="rt-label">あなたの称号</div><div class="rt-name"></div><div class="rt-bar"><div class="rt-fill"></div></div><div class="rt-next"></div></div>
         <div id="item-bonus-row" class="result-item-bonus" style="display:none;">💎 アイテムボーナス +<span id="item-bonus-val">0</span>点</div>
         <div class="result-sub">正解数 <span id="final-correct">0</span>問 / 正解率 <span id="final-accuracy">0</span>% / 撃破数 <span id="final-defeated">0</span>体</div>
 
@@ -642,6 +662,7 @@
     <div id="all-clear-screen" class="full-overlay" style="display:none;">
         <h2 class="result-title" style="font-size:24px;">🎉 100問完全制覇なのだ！ 🎉</h2>
         <div style="font-size:32px; font-weight:bold; color:var(--gold); margin:5px 0; text-shadow:0 0 16px rgba(255,214,102,0.5);"><span id="clear-score">0</span>点</div>
+        <div class="rank-title-box" id="clear-rank-box"><div class="rt-up">🎉 称号アップ！</div><div class="rt-label">あなたの称号</div><div class="rt-name"></div><div class="rt-bar"><div class="rt-fill"></div></div><div class="rt-next"></div></div>
         <div id="clear-item-bonus-row" class="result-item-bonus" style="display:none;">💎 アイテムボーナス +<span id="clear-item-bonus-val">0</span>点</div>
         <div class="result-sub">正解数 <span id="clear-correct">0</span>問 / 正解率 <span id="clear-accuracy">0</span>% / 撃破数 <span id="clear-defeated">0</span>体</div>
         <div class="next-adventure">
@@ -902,6 +923,7 @@
         if (typeof genre !== 'string') genre = selectedMode;
         if (genre !== 'main' && !(GENRES[genre] && isUnlocked(genre))) genre = 'main';
         currentMode = genre;
+        rankAtStart = rankInfo(getGemTotal()).idx; // 称号アップの判定用
         if (genre !== 'main') {
             currentPool = JSON.parse(JSON.stringify(window.GENRE_QUIZ[genre]));
             document.body.classList.add('genre-mode');
@@ -1148,7 +1170,8 @@
 
     function showItemGet() {
         const b = document.getElementById('bonus-pop-up');
-        b.innerText = "アイテム入手！💎\n宝物庫に保存したのだ\n（宝物庫 " + getGems() + "個）";
+        const cost = nextUnlockCost();
+        b.innerText = "アイテム入手！💎\n宝物庫 " + getGems() + "個" + (cost === null ? "" : getGems() >= cost ? "\n新しい冒険を解放できるのだ！" : "\n次の解放まで あと" + (cost - getGems()) + "個！");
         b.style.display = "block";
         setTimeout(() => { b.style.display = "none"; }, 1500);
     }
@@ -1375,6 +1398,7 @@
         document.getElementById('final-accuracy').innerText = getAccuracy();
         document.getElementById('final-defeated').innerText = defCount;
         saveRanking('rank-body');
+        showRankBox('result-rank-box');
         document.getElementById('result-screen').style.display = 'flex';
     }
 
@@ -1383,17 +1407,25 @@
     const CLEAR_KEY = 'quiztower_clear_count';
     function getClearCount() { try { return parseInt(localStorage.getItem(CLEAR_KEY)) || 0; } catch(e) { return 0; } }
     function recordClear() { try { localStorage.setItem(CLEAR_KEY, String(getClearCount() + 1)); } catch(e) {} }
+    // タイトル画面のバッジ: 今の称号(+100問制覇の回数)
     function showClearBadge() {
         const n = getClearCount(), el = document.getElementById('clear-badge');
-        if (!el || n <= 0) return;
-        el.innerText = '👑 100問制覇済み' + (n > 1 ? ' ×' + n : '');
+        if (!el) return;
+        el.innerText = '👑 ' + rankInfo(getGemTotal()).name + (n > 0 ? '・制覇' + (n > 1 ? '×' + n : '済み') : '');
         el.style.display = 'block';
     }
-    showClearBadge();
     // ===== 宝物庫(💎)と冒険の解放 =====
     // 💎はボス後のイベントクイズ正解で+1、100問制覇で+3。このスマホに保存され、ゲームオーバーでも消えない
     const GEM_KEY = 'quiztower_gems', UNLOCK_KEY = 'quiztower_unlocked', MODE_KEY = 'quiztower_mode';
-    const UNLOCK_COST = 3, CLEAR_GEM_BONUS = 3;
+    const UNLOCK_COSTS = [5, 10, 15], CLEAR_GEM_BONUS = 3; // 解放するたびに必要な💎が増える
+    const GEM_TOTAL_KEY = 'quiztower_gems_total';      // これまでに集めた💎の合計(使っても減らない)。称号に使う
+    const RANK_TITLES = [
+        { min: 0, name: '見習い冒険者' },
+        { min: 10, name: '塔の挑戦者' },
+        { min: 30, name: '塔の勇者' },
+        { min: 50, name: 'クイズマスター' },
+        { min: 100, name: '伝説の賢者' }
+    ];
     const GENRES = {
         history: { name: '歴史編', icon: '📜', img: 'images/stage_history.png', desc: '戦国武将から世界の歴史まで' },
         science: { name: '科学編', icon: '🔬', img: 'images/stage_science.png', desc: '生き物・人の体・宇宙のふしぎ' },
@@ -1402,10 +1434,39 @@
     function lsGet(k, def) { try { const v = localStorage.getItem(k); return v === null ? def : v; } catch(e) { return def; } }
     function lsSet(k, v) { try { localStorage.setItem(k, v); } catch(e) {} }
     function getGems() { return parseInt(lsGet(GEM_KEY, '0')) || 0; }
-    function addGems(n) { lsSet(GEM_KEY, String(Math.max(0, getGems() + n))); refreshTreasury(); }
+    function addGems(n) {
+        const total = getGemTotal(); // 先に今の合計を確定してから💎を増やす(二重に数えないように)
+        lsSet(GEM_KEY, String(Math.max(0, getGems() + n)));
+        if (n > 0) lsSet(GEM_TOTAL_KEY, String(total + n));
+        refreshTreasury();
+    }
+    function getGemTotal() {
+        const v = lsGet(GEM_TOTAL_KEY, null);
+        if (v !== null) return parseInt(v) || 0;
+        // 称号を入れる前に遊んでいた人: 今の💎 + 解放に使った分(当時は1つ3個)を合計とみなす
+        return getGems() + getUnlocked().length * 3;
+    }
+    function rankInfo(total) {
+        let idx = 0;
+        RANK_TITLES.forEach((r, i) => { if (total >= r.min) idx = i; });
+        const next = RANK_TITLES[idx + 1];
+        return { idx, name: RANK_TITLES[idx].name, next, toNext: next ? next.min - total : 0,
+                 progress: next ? (total - RANK_TITLES[idx].min) / (next.min - RANK_TITLES[idx].min) : 1 };
+    }
+    function nextUnlockCost() { const n = getUnlocked().length; return n < UNLOCK_COSTS.length ? UNLOCK_COSTS[n] : null; }
     function getUnlocked() { try { return JSON.parse(lsGet(UNLOCK_KEY, '[]')) || []; } catch(e) { return []; } }
     function isUnlocked(g) { return getUnlocked().includes(g); }
     let currentMode = 'main';
+    let rankAtStart = 0;
+    // 結果画面・制覇画面の「あなたの称号」
+    function showRankBox(id) {
+        const box = document.getElementById(id); if (!box) return;
+        const total = getGemTotal(), ri = rankInfo(total);
+        box.querySelector('.rt-name').innerText = ri.name;
+        box.querySelector('.rt-next').innerText = ri.next ? '集めた💎 ' + total + '個　次の称号「' + ri.next.name + '」まで あと' + ri.toNext + '個' : '集めた💎 ' + total + '個　最高の称号なのだ！';
+        box.classList.toggle('ranked-up', ri.idx > rankAtStart);
+        setTimeout(() => { box.querySelector('.rt-fill').style.width = Math.round(ri.progress * 100) + '%'; }, 300);
+    }
     let selectedMode = lsGet(MODE_KEY, 'main');
     if (selectedMode !== 'main' && !isUnlocked(selectedMode)) selectedMode = 'main';
     function rankKey() { return currentMode === 'main' ? 'zunda_rankings' : 'quiztower_rank_' + currentMode; }
@@ -1415,13 +1476,23 @@
         const g = getGems();
         const t = document.getElementById('title-gems'); if (t) t.innerText = g;
         const a = document.getElementById('adv-gems'); if (a) a.innerText = g;
+        const cost = nextUnlockCost();
+        const tn = document.getElementById('title-next');
+        if (tn) tn.innerText = cost === null ? '' : (g >= cost ? '新しい冒険を解放できるのだ！' : '次の解放まで あと💎' + (cost - g) + '個');
+        showClearBadge();
         const badge = document.getElementById('tap-start-badge');
         if (badge) badge.innerText = selectedMode === 'main' ? 'タップしてスタート' : GENRES[selectedMode].icon + ' ' + GENRES[selectedMode].name + 'をスタート';
     }
     function renderAdventureList() {
         const gems = getGems();
         const rows = [['main', null]].concat(Object.keys(GENRES).map(k => [k, GENRES[k]]));
-        document.querySelectorAll('.adv-cost-label').forEach(e => e.innerText = UNLOCK_COST);
+        const cost = nextUnlockCost();
+        document.getElementById('adv-progress-text').innerText = cost === null
+            ? '🎉 すべての冒険を解放したのだ！'
+            : (gems >= cost ? '💎' + gems + ' / ' + cost + '　解放できるのだ！好きな冒険を選んでね' : '💎' + gems + ' / ' + cost + '　次の解放まで あと' + (cost - gems) + '個');
+        document.getElementById('adv-progress-fill').style.width = (cost === null ? 100 : Math.min(100, gems / cost * 100)) + '%';
+        const ri = rankInfo(getGemTotal());
+        document.getElementById('adv-rank').innerHTML = '👑 称号：<b>' + ri.name + '</b>' + (ri.next ? '（集めた💎 ' + getGemTotal() + '個・「' + ri.next.name + '」まで あと' + ri.toNext + '個）' : '（最高の称号なのだ！）');
         document.getElementById('adv-list').innerHTML = rows.map(([k, g]) => {
             const unlocked = k === 'main' || isUnlocked(k);
             const pic = k === 'main' ? '<div class="adv-main-icon">🗼</div>' : '<img src="' + g.img + '" alt="">';
@@ -1429,8 +1500,8 @@
             const desc = k === 'main' ? 'いろいろなジャンルの100問' : g.desc + '（124問）';
             let btn;
             if (unlocked) btn = '<button class="adv-action play" onclick="playMode(\'' + k + '\')">▶ 遊ぶ</button>';
-            else if (gems >= UNLOCK_COST) btn = '<button class="adv-action unlock" onclick="unlockGenre(\'' + k + '\')">💎' + UNLOCK_COST + 'で解放</button>';
-            else btn = '<button class="adv-action" disabled>🔒 あと💎' + (UNLOCK_COST - gems) + '個</button>';
+            else if (gems >= cost) btn = '<button class="adv-action unlock" onclick="unlockGenre(\'' + k + '\')">💎' + cost + 'で解放</button>';
+            else btn = '<button class="adv-action" disabled>🔒 あと💎' + (cost - gems) + '個</button>';
             return '<div class="adv-row' + (unlocked ? '' : ' locked') + (k === selectedMode ? ' selected' : '') + '">' + pic +
                 '<div class="adv-info"><div class="adv-name">' + name + '</div><div class="adv-desc">' + desc + '</div></div>' + btn + '</div>';
         }).join('');
@@ -1445,8 +1516,10 @@
         clearTimeout(advMenuToastTimer); advMenuToastTimer = setTimeout(() => t.classList.remove('show'), 2000);
     }
     function unlockGenre(k) {
-        if (isUnlocked(k) || getGems() < UNLOCK_COST) return;
-        lsSet(GEM_KEY, String(getGems() - UNLOCK_COST));
+        const cost = nextUnlockCost();
+        if (isUnlocked(k) || cost === null || getGems() < cost) return;
+        lsSet(GEM_TOTAL_KEY, String(getGemTotal())); // 合計を先に確定しておく(使っても減らない)
+        lsSet(GEM_KEY, String(getGems() - cost));
         lsSet(UNLOCK_KEY, JSON.stringify(getUnlocked().concat(k)));
         try { sounds.comboSE.currentTime = 0; sounds.comboSE.play().catch(e=>{}); } catch(e) {}
         renderAdventureList();
@@ -1464,7 +1537,7 @@
         document.querySelectorAll('.adv-card[data-genre]').forEach(c => {
             const k = c.dataset.genre, lock = c.querySelector('.adv-lock');
             if (isUnlocked(k)) { c.classList.add('unlocked'); lock.innerText = '▶ 遊べる'; }
-            else lock.innerText = getGems() >= UNLOCK_COST ? '💎' + UNLOCK_COST + 'で解放できる！' : '🔒 あと💎' + (UNLOCK_COST - getGems()) + '個';
+            else { const cost = nextUnlockCost(); lock.innerText = getGems() >= cost ? '💎' + cost + 'で解放できる！' : '🔒 あと💎' + (cost - getGems()) + '個'; }
         });
     }
     refreshTreasury();
@@ -1490,6 +1563,7 @@
         document.getElementById('clear-gem-total').innerText = getGems();
         document.getElementById('clear-gem-bonus').style.display = 'block';
         refreshClearCards();
+        showRankBox('clear-rank-box');
         document.getElementById('all-clear-screen').style.display = 'flex';
     }
 
