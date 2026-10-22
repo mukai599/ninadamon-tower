@@ -552,6 +552,8 @@
         .adv-progress-text { font-size: 12px; font-weight: bold; color: #ffe9a8; }
         .adv-rank { font-size: 12px; color: #c9bff0; margin-bottom: 10px; text-align: left; }
         .adv-rank b { color: #ffe08a; }
+        .adv-action.chosen { background: rgba(77,255,176,0.18); color: #4dffb0; border: 1.5px solid #4dffb0; cursor: default; }
+        #adv-menu-toast { white-space: pre-line !important; text-align: center; }
     </style>
 </head>
 <body>
@@ -590,7 +592,7 @@
                 <div class="adv-title">📚 冒険を選ぶのだ</div>
                 <div class="adv-treasury">💎 宝物庫 <b id="adv-gems">0</b>個</div>
             </div>
-            <p class="adv-help">ボスを倒したあとのイベントクイズに正解すると💎が宝物庫に貯まるのだ。冒険を解放するには💎が必要で、1つ目は5個・2つ目は10個・3つ目は15個なのだ！</p>
+            <p class="adv-help">ボスを倒したあとのイベントクイズに正解すると💎が宝物庫に貯まるのだ。冒険を解放するには💎が必要で、1つ目は5個・2つ目は10個・3つ目は15個なのだ！遊びたい冒険を「選ぶ」で選んで、とじてからスタートするのだ。</p>
             <div class="adv-progress"><div class="adv-progress-text" id="adv-progress-text"></div><div class="rt-bar"><div class="rt-fill" id="adv-progress-fill"></div></div></div>
             <div class="adv-rank" id="adv-rank"></div>
             <div id="adv-list"></div>
@@ -766,6 +768,30 @@
         vPromo: new Audio('sounds/voice_promo.mp3')
     };
     sounds.bgmNormal = sounds.bgm;
+
+    // ===== メニューの効果音(ファイルを使わず、その場で「ピコッ」「ポン」を作って鳴らす) =====
+    let uiCtx = null;
+    function uiSound(type) {
+        try {
+            uiCtx = uiCtx || new (window.AudioContext || window.webkitAudioContext)();
+            if (uiCtx.state === 'suspended') uiCtx.resume();
+            const t0 = uiCtx.currentTime;
+            const notes = {
+                select: [['square', 988, 0, 0.06], ['square', 1319, 0.07, 0.09]],   // ピコッ
+                open:   [['sine', 523, 0, 0.08], ['sine', 784, 0.06, 0.12]],        // ポン↑
+                close:  [['sine', 784, 0, 0.08], ['sine', 523, 0.06, 0.12]]         // ポン↓
+            }[type] || [];
+            notes.forEach(([wave, freq, start, dur]) => {
+                const o = uiCtx.createOscillator(), g = uiCtx.createGain();
+                o.type = wave; o.frequency.value = freq;
+                g.gain.setValueAtTime(0.0001, t0 + start);
+                g.gain.exponentialRampToValueAtTime(wave === 'square' ? 0.08 : 0.25, t0 + start + 0.01);
+                g.gain.exponentialRampToValueAtTime(0.0001, t0 + start + dur);
+                o.connect(g).connect(uiCtx.destination);
+                o.start(t0 + start); o.stop(t0 + start + dur + 0.02);
+            });
+        } catch(e) {}
+    }
 
     // ===== ボイス(家来=ずんだもん / 姫=もち子さん) =====
     // 場面ごとに数種類あり、ランダムに選ぶ(直前と同じものは避ける)。声が重ならないよう、新しいボイスは前のボイスを止めてから鳴らす
@@ -951,8 +977,8 @@
         window.open(url, '_blank');
     }
 
-    function openManual() { document.getElementById('manual-screen').style.display = 'flex'; }
-    function closeManual() { document.getElementById('manual-screen').style.display = 'none'; }
+    function openManual() { uiSound('open'); document.getElementById('manual-screen').style.display = 'flex'; }
+    function closeManual() { uiSound('close'); document.getElementById('manual-screen').style.display = 'none'; }
 
     // タイトル画面専用のBGM(ブラウザが自動再生を止めた場合は、最初に画面を触った時に流し始める)
     const titleBgm = new Audio('sounds/bgm_quiz_play.mp3');
@@ -1564,7 +1590,8 @@
             const name = k === 'main' ? '本編 QUIZ TOWER' : g.icon + ' ' + g.name;
             const desc = k === 'main' ? 'いろいろなジャンルの100問' : g.desc + '（124問）';
             let btn;
-            if (unlocked) btn = '<button class="adv-action play" onclick="playMode(\'' + k + '\')">▶ 遊ぶ</button>';
+            if (unlocked && k === selectedMode) btn = '<button class="adv-action chosen" disabled>✓ 選択中</button>';
+            else if (unlocked) btn = '<button class="adv-action play" onclick="playMode(\'' + k + '\')">選ぶ</button>';
             else if (gems >= cost) btn = '<button class="adv-action unlock" onclick="unlockGenre(\'' + k + '\')">💎' + cost + 'で解放</button>';
             else btn = '<button class="adv-action" disabled>🔒 あと💎' + (cost - gems) + '個</button>';
             return '<div class="adv-row' + (unlocked ? '' : ' locked') + (k === selectedMode ? ' selected' : '') + '">' + pic +
@@ -1572,8 +1599,8 @@
         }).join('');
         refreshTreasury();
     }
-    function openAdventureMenu() { renderAdventureList(); document.getElementById('adventure-screen').style.display = 'flex'; }
-    function closeAdventureMenu() { document.getElementById('adventure-screen').style.display = 'none'; }
+    function openAdventureMenu() { uiSound('open'); renderAdventureList(); document.getElementById('adventure-screen').style.display = 'flex'; }
+    function closeAdventureMenu() { uiSound('close'); document.getElementById('adventure-screen').style.display = 'none'; refreshTreasury(); }
     let advMenuToastTimer = null;
     function advMenuToast(text) {
         const t = document.getElementById('adv-menu-toast');
@@ -1592,10 +1619,12 @@
         playVoice('hime_unlock'); playVoiceLater('unlock_1', 3300);
     }
     // 冒険を選んで遊ぶ: 選んだモードを覚えておき、すぐにゲームを始める
+    // 冒険を選ぶだけ(ゲームはタイトル画面のスタートから始める)
     function playMode(k) {
         selectedMode = k; lsSet(MODE_KEY, k);
-        closeAdventureMenu();
-        startGame(k);
+        uiSound('select');
+        renderAdventureList();
+        advMenuToast((k === 'main' ? '🗼 本編' : GENRES[k].icon + ' ' + GENRES[k].name) + 'を選んだのだ！\n「とじる」→ スタートで始まるのだ');
     }
     // クリア画面のカードから冒険メニューへ(タイトルに戻ってメニューを開く)
     function goAdventureMenu() { location.href = location.pathname + '?adventure=1'; }
