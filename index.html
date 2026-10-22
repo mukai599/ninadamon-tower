@@ -896,10 +896,18 @@
         for (let k = 0; k < 3; k++) next();
     }
     window.addEventListener('load', () => setTimeout(preloadVoices, 800));
-    let currentVoice = null, voiceTimers = [], lastVoiceOf = {};
+    let currentVoice = null, voiceTimers = [], lastVoiceOf = {}, voiceEndsAt = 0;
+    function voiceIsPlaying() { return currentVoice && Date.now() < voiceEndsAt; }
+    // ボイスが鳴っている間は、撃破の「パッパン」などを小さめにして声を聞こえやすくする
+    function playSEUnderVoice(el, base) {
+        el.volume = voiceIsPlaying() ? base * 0.35 : base;
+        try { el.currentTime = 0; const p = el.play(); if (p) p.catch(e => {}); } catch(e) {}
+        if (voiceIsPlaying()) setTimeout(() => { el.volume = base; }, Math.max(0, voiceEndsAt - Date.now()) + 50);
+    }
     function stopVoices() {
         voiceTimers.forEach(clearTimeout); voiceTimers = [];
         if (currentVoice) { try { currentVoice.stop ? currentVoice.stop() : currentVoice.pause(); } catch(e) {} currentVoice = null; }
+        voiceEndsAt = 0;
     }
     function pickVoice(group) {
         const list = VOICE_GROUPS[group] || [group];
@@ -917,10 +925,10 @@
             if (!buf) { loadVoice(n); return; } // まだ読み込み中なら今回は鳴らさない
             unlockAudio();
             const src = actx.createBufferSource(); src.buffer = buf; src.connect(buses.voice); src.start();
-            currentVoice = src;
+            currentVoice = src; voiceEndsAt = Date.now() + buf.duration * 1000;
         } else {
             const a = new Audio('sounds/voice/' + n + '.mp3'); a.volume = Math.min(1, volSettings.voice);
-            const p = a.play(); if (p) p.catch(e => {}); currentVoice = a;
+            const p = a.play(); if (p) p.catch(e => {}); currentVoice = a; voiceEndsAt = Date.now() + 2500;
         }
     }
     // 少し遅らせて鳴らす(つづけて掛け合いにする時など)
@@ -1267,6 +1275,10 @@
                             playVoice(streak >= 2 ? comboVoiceGroup(streak) : 'himeOk');
                         }, 400);
                         showComboPop();
+                    } else {
+                        // とどめの正解でもボイスを鳴らす(あとの「パッパン」はボイス中は小さめに鳴る)
+                        sounds.ok.play().catch(e=>{});
+                        setTimeout(() => playVoice(streak >= 2 ? comboVoiceGroup(streak) : 'himeOk'), 300);
                     }
                     showAttackPose();
                 } else {
@@ -1534,12 +1546,12 @@
         else if(eHp <= 0) {
             const wasBoss = isBossTurn();
             if (wasBoss) {
-                sounds.bossClear.currentTime = 0; sounds.bossClear.play().catch(e=>{});
+                playSEUnderVoice(sounds.bossClear, 1);
                 showVictory();
                 playVoiceLater('bossWin', 300);
                 playVoiceLater('himeBossWin', 1900);
             } else {
-                sounds.defeat.play().catch(e=>{});
+                playSEUnderVoice(sounds.defeat, 1);
             }
             checkComboBonus();
             let hb = hp * 10, mb = mochi * 200, tb = 500 + hb + mb;
