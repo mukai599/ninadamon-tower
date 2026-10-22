@@ -620,7 +620,7 @@
         <div class="manual-card"><b>🗼 塔を登る</b><span>敵を5体倒すたびに1階ずつ塔を登っていくのだ。上の階ほど問題も難しくなって、最上階のボスを倒せば100問完全制覇なのだ。</span></div>
         <div class="manual-card"><b>💎 宝物庫と新しい冒険</b><span>ボスのあとのイベントクイズに正解すると、💎が宝物庫に貯まっていくのだ。ゲームオーバーになっても💎は消えないのだ。「歴史編」「科学編」「文学編」は💎で解放できて、1つ目は5個・2つ目は10個・3つ目は15個必要なのだ。100問制覇すると💎3個のボーナスももらえるのだ。集めた💎の合計で、見習い冒険者→塔の挑戦者→塔の勇者→クイズマスター→伝説の賢者と称号も上がっていくのだ！</span></div>
         <div class="manual-card"><b>⭐ スコアとランキング</b><span>上の段にSCOREと撃破数(💀)が出るのだ。ゲーム終了後は全国ランキングにも登録できるのだ。</span></div>
-        <div class="manual-card"><b>📝 クレジット</b><span>音声：VOICEVOX:ずんだもん</span></div>
+        <div class="manual-card"><b>📝 クレジット</b><span>音声：VOICEVOX:ずんだもん / VOICEVOX:もち子(cv 明日葉よもぎ)</span></div>
         <div class="manual-card contact-card"><b>📮 お問い合わせ</b><span>動かない・表示がおかしい・問題の答えが間違っている…などに気づいたら、こちらから教えてほしいのだ。</span>
             <button class="contact-btn" onclick="openContact()">📮 お問い合わせ・不具合の報告</button>
             <div id="contact-note"></div>
@@ -767,6 +767,50 @@
     };
     sounds.bgmNormal = sounds.bgm;
 
+    // ===== ボイス(家来=ずんだもん / 姫=もち子さん) =====
+    // 場面ごとに数種類あり、ランダムに選ぶ(直前と同じものは避ける)。声が重ならないよう、新しいボイスは前のボイスを止めてから鳴らす
+    const VOICE_GROUPS = {
+        comboA: ['combo_a1','combo_a2','combo_a3','combo_a4'],
+        comboB: ['combo_b1','combo_b2','combo_b3','combo_b4'],
+        comboC: ['combo_c1','combo_c2','combo_c3','combo_c4'],
+        comboD: ['combo_d1','combo_d2','combo_d3','combo_d4'],
+        himeOk: ['hime_ok1','hime_ok2','hime_ok3','hime_ok4','hime_ok5','hime_ok6'],
+        miss: ['miss_2','miss_3','miss_4','hime_ng1','hime_ng2','hime_ng3','hime_ng4'],
+        timeout: ['timeout_1','timeout_2','hime_timeout1','hime_timeout2'],
+        pinch: ['pinch_1','pinch_2','hime_pinch1','hime_pinch2'],
+        heal: ['heal_1','heal_2','hime_heal1','hime_heal2'],
+        boss: ['boss_1','boss_2'],
+        bossWin: ['bosswin_1','bosswin_2','bosswin_3'],
+        himeBossWin: ['hime_bosswin1','hime_bosswin2','hime_bosswin3'],
+        gem: ['gem_1','gem_2','hime_gem1','hime_gem2']
+    };
+    const voices = {};
+    Object.values(VOICE_GROUPS).flat().concat(['boss_last','rankup_1','unlock_1','clear_1','over_1','title_1','title_2',
+        'hime_rankup','hime_unlock','hime_clear','hime_over','hime_title1','hime_title2']).forEach(n => {
+        if (!voices[n]) { voices[n] = new Audio('sounds/voice/' + n + '.mp3'); voices[n].preload = 'auto'; }
+    });
+    let currentVoice = null, voiceTimers = [], lastVoiceOf = {};
+    function stopVoices() {
+        voiceTimers.forEach(clearTimeout); voiceTimers = [];
+        if (currentVoice) { try { currentVoice.pause(); } catch(e) {} currentVoice = null; }
+    }
+    function pickVoice(group) {
+        const list = VOICE_GROUPS[group] || [group];
+        let n = list[Math.floor(Math.random() * list.length)];
+        if (list.length > 1 && n === lastVoiceOf[group]) n = list[(list.indexOf(n) + 1) % list.length];
+        lastVoiceOf[group] = n;
+        return n;
+    }
+    function playVoice(group) {
+        const a = voices[pickVoice(group)]; if (!a) return;
+        if (currentVoice && currentVoice !== a) { try { currentVoice.pause(); } catch(e) {} }
+        currentVoice = a;
+        try { a.currentTime = 0; a.volume = 1.0; const p = a.play(); if (p) p.catch(e => {}); } catch(e) {}
+    }
+    // 少し遅らせて鳴らす(つづけて掛け合いにする時など)
+    function playVoiceLater(group, ms) { voiceTimers.push(setTimeout(() => playVoice(group), ms)); }
+    function comboVoiceGroup(st) { return st >= 10 ? 'comboD' : st >= 7 ? 'comboC' : st >= 4 ? 'comboB' : 'comboA'; }
+
     // ★文字化け対策版クイズデータ
     // 問題は難しさで分けている(テーマは混ぜてある): weak=やさしい / mid=ふつう / boss=むずかしい
     const masterQuizData = {
@@ -863,6 +907,8 @@
         if (roaring) {
             bossIntroPose = true;
             sounds.bossRoar.currentTime = 0; sounds.bossRoar.play().catch(e=>{});
+            // ボスの咆哮のあとに家来の気合いボイス。最上階の黒竜だけ「ついに黒竜なのだ…！」
+            playVoiceLater(d === bossDesign ? 'boss_last' : 'boss', 1200);
             bossRoarTimer = setTimeout(() => {
                 const im = visual.querySelector('img');
                 if (im && isBossTurn()) im.src = d.img;
@@ -912,14 +958,25 @@
     const titleBgm = new Audio('sounds/bgm_quiz_play.mp3');
     titleBgm.loop = true; titleBgm.volume = 0.25;
     let gameStarted = false;
+    let titleVoicePlayed = false;
+    function titleGreeting() {
+        if (titleVoicePlayed || gameStarted) return;
+        titleVoicePlayed = true;
+        playVoiceLater('hime_title1', 300); playVoiceLater('title_2', 2800);
+    }
     function startTitleBgm() {
         if (gameStarted || !titleBgm.paused) return;
         const p = titleBgm.play(); if (p) p.catch(e => {});
     }
     startTitleBgm();
-    ['pointerdown', 'touchstart', 'keydown'].forEach(ev => document.addEventListener(ev, startTitleBgm, { once: true, capture: true }));
+    // 最初に画面を触った時: タイトルBGM + 姫と家来のあいさつ(自動再生は止められるので、触ってから鳴らす)
+    const onFirstTouch = () => { startTitleBgm(); titleGreeting(); };
+    ['pointerdown', 'touchstart', 'keydown'].forEach(ev => document.addEventListener(ev, onFirstTouch, { once: true, capture: true }));
 
     function startGame(genre) {
+        stopVoices();
+        // スマホで後から鳴らせるように、最初のタップでボイスも一度だけ再生→停止しておく
+        Object.values(voices).forEach(a => { try { a.muted = true; const p = a.play(); if (p) p.then(() => { a.pause(); a.currentTime = 0; a.muted = false; }).catch(e => { a.muted = false; }); } catch(e) {} });
         if (typeof genre !== 'string') genre = selectedMode;
         if (genre !== 'main' && !(GENRES[genre] && isUnlocked(genre))) genre = 'main';
         currentMode = genre;
@@ -1066,16 +1123,19 @@
                         }, 350);
                         setTimeout(() => {
                             if (streak > 1) { sounds.comboSE.currentTime = 0; sounds.comboSE.play().catch(e=>{}); }
-                            let voice = sounds["vCombo" + Math.min(streak, 4)];
-                            if (voice) { voice.currentTime = 0; voice.play().catch(e=>{}); }
+                            // 1問目の正解は姫がほめる、2連続以上は家来のコンボボイス
+                            playVoice(streak >= 2 ? comboVoiceGroup(streak) : 'himeOk');
                         }, 400);
                         showComboPop();
                     }
                     showAttackPose();
                 } else {
                     checkComboBonus();
+                    const hpBefore = hp;
                     streak = 0; maxStreakThisTurn = 0; hp -= 20; totalWrong++; missedPool.push(q);
                     sounds.ng.play().catch(e=>{});
+                    // HPが30以下に落ちた瞬間は「ピンチ」、それ以外は「まちがえた」
+                    playVoiceLater(hpBefore > 30 && hp <= 30 && hp > 0 ? 'pinch' : 'miss', 350);
                     popZunda("images/anim_dizzy.gif");
                     document.getElementById('game-container').classList.add('shake-screen');
                     setTimeout(() => document.getElementById('game-container').classList.remove('shake-screen'), 300);
@@ -1155,6 +1215,7 @@
             sounds.ok.play().catch(e=>{});
             updateUI();
             showItemGet();
+            playVoiceLater('gem', 200);
         } else {
             sounds.ng.play().catch(e=>{});
             b.innerText = (timeout ? "時間切れ…" : "ざんねん！") + "\nアイテムならず\n正解は「" + q.c[q.a] + "」";
@@ -1239,6 +1300,7 @@
                 if (inEventQuiz) { finishEventQuiz(false, true); return; } // ごほうび問題の時間切れはHPを減らさない
                 checkComboBonus();
                 streak = 0; maxStreakThisTurn = 0; hp -= 20;
+                playVoice(hp > 0 && hp <= 30 && hp + 20 > 30 ? 'pinch' : 'timeout');
                 lockChoices();
                 if (!inEventQuiz) {
                     totalWrong++; missedPool.push(currentQuestion);
@@ -1271,7 +1333,7 @@
         if (isPaused) return;
         isPaused = true;
         pauseTimer();
-        pausedAudios = [...Object.values(sounds), titleBgm].filter(a => a && !a.paused && a !== sounds.tick);
+        pausedAudios = [...Object.values(sounds), ...Object.values(voices), titleBgm].filter(a => a && !a.paused && a !== sounds.tick);
         pausedAudios.forEach(a => a.pause());
     }
     function resumeGame() {
@@ -1331,6 +1393,8 @@
             if (wasBoss) {
                 sounds.bossClear.currentTime = 0; sounds.bossClear.play().catch(e=>{});
                 showVictory();
+                playVoiceLater('bossWin', 300);
+                playVoiceLater('himeBossWin', 1900);
             } else {
                 sounds.defeat.play().catch(e=>{});
             }
@@ -1387,7 +1451,7 @@
         stopTimer(); sounds.bgm.pause();
         sounds.result.currentTime = 0; sounds.result.play().catch(e=>{});
         // 結果発表時にボイスを再生
-        setTimeout(() => { sounds.vPromo.currentTime = 0; sounds.vPromo.play().catch(e=>{}); }, 500);
+        stopVoices(); playVoiceLater('over_1', 500); playVoiceLater('hime_over', 3800);
         let bonus = applyItemBonus();
         if (bonus > 0) {
             document.getElementById('item-bonus-val').innerText = bonus;
@@ -1465,6 +1529,7 @@
         box.querySelector('.rt-name').innerText = ri.name;
         box.querySelector('.rt-next').innerText = ri.next ? '集めた💎 ' + total + '個　次の称号「' + ri.next.name + '」まで あと' + ri.toNext + '個' : '集めた💎 ' + total + '個　最高の称号なのだ！';
         box.classList.toggle('ranked-up', ri.idx > rankAtStart);
+        if (ri.idx > rankAtStart) { playVoiceLater('hime_rankup', 3600); playVoiceLater('rankup_1', 7000); }
         setTimeout(() => { box.querySelector('.rt-fill').style.width = Math.round(ri.progress * 100) + '%'; }, 300);
     }
     let selectedMode = lsGet(MODE_KEY, 'main');
@@ -1524,6 +1589,7 @@
         try { sounds.comboSE.currentTime = 0; sounds.comboSE.play().catch(e=>{}); } catch(e) {}
         renderAdventureList();
         advMenuToast('🎉 ' + GENRES[k].name + 'が解放されたのだ！');
+        playVoice('hime_unlock'); playVoiceLater('unlock_1', 3300);
     }
     // 冒険を選んで遊ぶ: 選んだモードを覚えておき、すぐにゲームを始める
     function playMode(k) {
@@ -1547,7 +1613,7 @@
         stopTimer(); sounds.bgm.pause();
         sounds.clearBgm.currentTime = 0; sounds.clearBgm.play().catch(e=>{});
         // オールクリア時に一番盛り上がるボイスを再生
-        setTimeout(() => { sounds.vCombo4.currentTime = 0; sounds.vCombo4.play().catch(e=>{}); }, 500);
+        stopVoices(); playVoiceLater('clear_1', 500); playVoiceLater('hime_clear', 3900);
         let bonus = applyItemBonus();
         if (bonus > 0) {
             document.getElementById('clear-item-bonus-val').innerText = bonus;
@@ -1609,7 +1675,7 @@
     document.getElementById('start-screen').addEventListener('pointerdown', () => { if (!storyEl.classList.contains('show')) scheduleStory(); });
     scheduleStory();
     document.getElementById('btn-mochi').onclick = function() {
-        if(mochi > 0 && hp < 100) { mochi--; hp = Math.min(hp + 50, 100); sounds.heal.play().catch(e=>{}); updateUI();
+        if(mochi > 0 && hp < 100) { mochi--; hp = Math.min(hp + 50, 100); sounds.heal.play().catch(e=>{}); playVoiceLater('heal', 250); updateUI();
             // 困った・やばい顔のときに回復したら、HPに合ったポーズに戻す
             const cur = document.getElementById('main-illust').src;
             if (/anim_(nervous|pinch)/.test(cur) && !cur.includes(idlePose().split('/').pop())) popZunda(idlePose()); }
