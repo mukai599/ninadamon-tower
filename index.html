@@ -87,7 +87,7 @@
 
         /* プレイヤーアバター：戦闘エリアの左下に大きく表示、HPバーは頭の上 */
         #player-pill {
-            position:absolute; left:0; bottom:0; z-index:8;
+            position:absolute; left:14px; bottom:0; z-index:8;
             display:flex; flex-direction:column; align-items:center; gap:3px;
         }
         #main-illust {
@@ -567,6 +567,28 @@
         /* 掲示板は横幅いっぱいで真ん中に、🔊と？はその下の右側に並べる */
         #notice-board { flex: none; width: 100%; }
         .hud-icons { display: flex; justify-content: flex-end; gap: 8px; }
+        /* ===== コンボゲージ(左端・7マス)と会心の演出 ===== */
+        #combo-gauge { position: absolute; left: 4px; top: 34px; bottom: 12px; width: 13px; z-index: 9; display: flex; flex-direction: column; align-items: center; gap: 3px; pointer-events: none; }
+        #combo-gauge .cg-max { font-size: 7.5px; font-weight: 900; color: rgba(255,255,255,0.35); letter-spacing: -0.3px; }
+        #combo-gauge .cg-bar { flex: 1; width: 100%; display: flex; flex-direction: column-reverse; gap: 3px; padding: 2px; border-radius: 8px; background: rgba(0,0,0,0.35); }
+        #combo-gauge .cg-seg { flex: 1; border-radius: 4px; background: rgba(255,255,255,0.12); transition: background 0.25s, box-shadow 0.25s; }
+        #combo-gauge .cg-seg.on:nth-child(1) { background: #ff4d4d; } #combo-gauge .cg-seg.on:nth-child(2) { background: #ff9a3d; }
+        #combo-gauge .cg-seg.on:nth-child(3) { background: #ffe14d; } #combo-gauge .cg-seg.on:nth-child(4) { background: #5ee06a; }
+        #combo-gauge .cg-seg.on:nth-child(5) { background: #4dabff; } #combo-gauge .cg-seg.on:nth-child(6) { background: #5b5bff; }
+        #combo-gauge .cg-seg.on:nth-child(7) { background: #c45bff; }
+        #combo-gauge .cg-seg.on { box-shadow: 0 0 6px rgba(255,255,255,0.6); }
+        #combo-gauge.max .cg-max { color: #fff; text-shadow: 0 0 6px #ffda44, 0 0 10px #ff4dd2; animation: cg-max-blink 0.6s infinite alternate; }
+        #combo-gauge.max .cg-bar { box-shadow: 0 0 10px #ffda44, 0 0 16px #c45bff; animation: aurora-hue 2s linear infinite; }
+        @keyframes cg-max-blink { from { opacity: 0.6; } to { opacity: 1; } }
+        #crit-pop { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%) scale(0.6); z-index: 60; opacity: 0; pointer-events: none;
+            font-size: 30px; font-weight: 900; white-space: nowrap; color: #fff;
+            text-shadow: 0 0 8px #ff4dd2, 0 0 16px #ffda44, 3px 3px 0 #7a1fa2; }
+        #crit-pop.show { animation: crit-pop 1.3s ease-out forwards; }
+        @keyframes crit-pop { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotate(-6deg); } 15% { opacity: 1; transform: translate(-50%, -50%) scale(1.25) rotate(2deg); }
+            30% { transform: translate(-50%, -50%) scale(1) rotate(0); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -60%) scale(1); } }
+        #crit-flash { position: absolute; inset: 0; z-index: 55; pointer-events: none; opacity: 0; background: radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,220,120,0.6) 40%, rgba(255,77,210,0) 75%); }
+        #crit-flash.show { animation: crit-flash 0.45s ease-out; }
+        @keyframes crit-flash { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
     </style>
 </head>
 <body>
@@ -646,8 +668,9 @@
         <div class="manual-card"><b>❤️ HPゲージ</b><span>ニナだもんの頭の上がニナだもんのHP、敵の下が敵のHPなのだ。正解すると敵に、不正解だとニナだもんにダメージが入るのだ。</span></div>
         <div class="manual-card"><b>💊 回復ボタン</b><span>左上の「回復」をタップするとHPが回復するのだ。1ゲームで3回まで使えるのだ。</span></div>
         <div class="manual-card"><b>🔥 コンボと闘気</b><span>連続で正解するとコンボになり、点数が増えるのだ。コンボが続くと、ニナだもんの闘気が赤→オレンジ→黄→緑→青→藍→紫と変わっていくのだ。</span></div>
+        <div class="manual-card"><b>⚡ コンボゲージと会心の一撃</b><span>左はしのゲージは、連続正解の数なのだ。7つたまると「MAX」！MAXの間は、正解するたびに「会心の一撃」「2回攻撃」「3回攻撃」が出ることがあって、敵に大ダメージなのだ。まちがえるとゲージは0にもどるのだ。</span></div>
         <div class="manual-card"><b>🐉 ボス戦</b><span>5体目ごとにボスが出るのだ。キングスライム、氷の女王スライム、炎の鬼、漆黒の騎士ゴーレム…そして25体目、最上階には黒竜が待っているのだ。倒すとイベントクイズが出て、正解するとアイテム(💎)がもらえるのだ。</span></div>
-        <div class="manual-card"><b>🗼 塔を登る</b><span>敵を5体倒すたびに1階ずつ塔を登っていくのだ。上の階ほど問題も難しくなって、最上階のボスを倒せば100問完全制覇なのだ。</span></div>
+        <div class="manual-card"><b>🗼 塔を登る</b><span>敵を5体倒すたびに1階ずつ塔を登っていくのだ。上の階ほど問題も難しくなって、最上階の黒竜を倒せば完全制覇なのだ。</span></div>
         <div class="manual-card"><b>💎 宝物庫と新しい冒険</b><span>ボスのあとのイベントクイズに正解すると、💎が宝物庫に貯まっていくのだ。ゲームオーバーになっても💎は消えないのだ。「歴史編」「科学編」「文学編」は💎で解放できて、1つ目は5個・2つ目は10個・3つ目は15個必要なのだ。100問制覇すると💎3個のボーナスももらえるのだ。集めた💎の合計で、見習い冒険者→塔の挑戦者→塔の勇者→クイズマスター→伝説の賢者と称号も上がっていくのだ！</span></div>
         <div class="manual-card"><b>⭐ スコアとランキング</b><span>上の段にSCOREと撃破数(💀)が出るのだ。ゲーム終了後は全国ランキングにも登録できるのだ。</span></div>
         <div class="manual-card"><b>📝 クレジット</b><span>音声：VOICEVOX:ずんだもん / VOICEVOX:もち子(cv 明日葉よもぎ)</span></div>
@@ -690,7 +713,7 @@
     </div>
 
     <div id="all-clear-screen" class="full-overlay" style="display:none;">
-        <h2 class="result-title" style="font-size:24px;">🎉 100問完全制覇なのだ！ 🎉</h2>
+        <h2 class="result-title" id="clear-title" style="font-size:24px;">🎉 100問完全制覇なのだ！ 🎉</h2>
         <div style="font-size:32px; font-weight:bold; color:var(--gold); margin:5px 0; text-shadow:0 0 16px rgba(255,214,102,0.5);"><span id="clear-score">0</span>点</div>
         <div class="rank-title-box" id="clear-rank-box"><div class="rt-up">🎉 称号アップ！</div><div class="rt-label">あなたの称号</div><div class="rt-name"></div><div class="rt-bar"><div class="rt-fill"></div></div><div class="rt-next"></div></div>
         <div id="clear-item-bonus-row" class="result-item-bonus" style="display:none;">💎 アイテムボーナス +<span id="clear-item-bonus-val">0</span>点</div>
@@ -740,6 +763,9 @@
 
         <div id="main-action-view">
             <div id="combo-pop">0 COMBO!</div>
+            <div id="crit-pop"></div>
+            <div id="crit-flash"></div>
+            <div id="combo-gauge"><div class="cg-max">MAX</div><div class="cg-bar"><div class="cg-seg"></div><div class="cg-seg"></div><div class="cg-seg"></div><div class="cg-seg"></div><div class="cg-seg"></div><div class="cg-seg"></div><div class="cg-seg"></div></div></div>
         </div>
 
         <div id="player-pill">
@@ -1087,7 +1113,7 @@
 
     // ===== お問い合わせ(Googleフォーム) =====
     // フォームの「事前入力したURL」をここに入れる。DEVICE_INFO / GAME_STATE の部分を自動で機種情報・進み具合に置き換えて開く
-    const APP_VERSION = '1.1.1';
+    const APP_VERSION = '1.2.0';
     const CONTACT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfPKIBjtYtvE7uNDuArYMt7OVOk-fOat7ySfFI649yUNUNpSg/viewform?usp=pp_url&entry.584805071=DEVICE_INFO&entry.964317062=GAME_STATE'; // 機種の情報 / ゲームの状況
     document.getElementById('app-version-label').innerText = 'v' + APP_VERSION;
     function contactInfo() {
@@ -1235,7 +1261,8 @@
 
     function loadQuiz() {
         if(hp <= 0) return;
-        if(totalCorrect >= 100) { showAllClearScreen(); return; }
+        // 100問正解するか、最上階の黒竜(25体目)を倒したら完全制覇(会心で早く倒せることもある)
+        if(totalCorrect >= 100 || defCount >= BOSS_EVERY * 5) { showAllClearScreen(); return; }
 
         inEventQuiz = false;
         if (pendingEventQuiz) { pendingEventQuiz = false; loadEventQuiz(); return; }
@@ -1284,7 +1311,11 @@
                     streak++; totalCorrect++;
                     if(streak > maxStreakThisTurn) maxStreakThisTurn = streak;
                     score += (100 + (streak > 1 ? streak * 25 : 0));
-                    eHp -= 25;
+                    // コンボゲージがMAX(7連続以上)の時は、正解するたびに会心・2回攻撃・3回攻撃の抽選
+                    const special = rollSpecialAttack();
+                    eHp -= special.damage;
+                    score += special.bonus;
+                    if (special.type) showSpecialAttack(special);
                     if (eHp > 0) {
                         playSE('ok');
                         const visual = document.getElementById('enemy-visual');
@@ -1301,13 +1332,14 @@
                             // 1問目の正解は姫がほめる、2連続以上は家来のコンボボイス
                             playVoice(streak >= 2 ? comboVoiceGroup(streak) : 'himeOk');
                         }, 400);
-                        showComboPop();
+                        if (!special.type) showComboPop(); // 会心などの時は大きな文字と重ならないよう出さない
                     } else {
                         // とどめの正解でもボイスを鳴らす(あとの「パッパン」はボイス中は小さめに鳴る)
                         playSE('ok');
                         setTimeout(() => playVoice(streak >= 2 ? comboVoiceGroup(streak) : 'himeOk'), 300);
                     }
                     showAttackPose();
+                    if (special.type) setTimeout(() => popZunda("images/anim_fight_once.gif?t=" + Date.now()), 150);
                 } else {
                     checkComboBonus();
                     const hpBefore = hp;
@@ -1553,6 +1585,7 @@
         }
         document.getElementById('score-val').innerText = score;
         document.getElementById('mochi-val').innerText = mochi;
+        updateComboGauge();
         document.getElementById('item-val').innerText = itemCount;
         document.getElementById('defeat-val').innerText = defCount;
         const ccEl = document.getElementById('correct-count');
@@ -1608,6 +1641,43 @@
         v.style.display = 'block';
         v.classList.remove('zunda-pop'); void v.offsetWidth; v.classList.add('zunda-pop');
         setTimeout(() => { v.style.display = 'none'; }, 2100);
+    }
+
+    // ===== MAXコンボの会心・連続攻撃 =====
+    const SPECIAL_ATTACKS = [ // 上から順に抽選(合計34%)
+        { type: 'triple', rate: 0.04, hits: 3, damage: 75, bonus: 300, text: '⚡3回攻撃！！⚡' },
+        { type: 'double', rate: 0.10, hits: 2, damage: 50, bonus: 150, text: '⚔️2回攻撃！⚔️' },
+        { type: 'crit',   rate: 0.20, hits: 1, damage: 50, bonus: 200, text: '💥会心の一撃！💥' }
+    ];
+    const COMBO_MAX = 7;
+    function rollSpecialAttack() {
+        if (streak >= COMBO_MAX) {
+            let r = Math.random();
+            for (const sa of SPECIAL_ATTACKS) { if (r < sa.rate) return sa; r -= sa.rate; }
+        }
+        return { type: null, hits: 1, damage: 25, bonus: 0 };
+    }
+    function showSpecialAttack(sa) {
+        const pop = document.getElementById('crit-pop'), flash = document.getElementById('crit-flash');
+        pop.innerText = sa.text;
+        pop.classList.remove('show'); flash.classList.remove('show'); void pop.offsetWidth;
+        pop.classList.add('show'); flash.classList.add('show');
+        playSE('auraUp');
+        // 2回・3回攻撃は、斬る演出と効果音をつづけて出す
+        const visual = document.getElementById('enemy-visual'), slash = document.getElementById('slash-mark');
+        for (let h = 1; h < sa.hits; h++) {
+            setTimeout(() => {
+                playSE('ok');
+                visual.classList.remove('enemy-hit-anim'); void visual.offsetWidth; visual.classList.add('enemy-hit-anim');
+                slash.classList.remove('active'); void slash.offsetWidth; slash.classList.add('active');
+            }, 380 * h);
+        }
+    }
+    function updateComboGauge() {
+        const g = document.getElementById('combo-gauge'); if (!g) return;
+        const n = Math.min(streak, COMBO_MAX);
+        g.querySelectorAll('.cg-seg').forEach((seg, i) => seg.classList.toggle('on', i < n));
+        g.classList.toggle('max', streak >= COMBO_MAX);
     }
 
     function showComboPop() {
@@ -1804,6 +1874,7 @@
             document.getElementById('clear-item-bonus-val').innerText = bonus;
             document.getElementById('clear-item-bonus-row').style.display = 'block';
         }
+        document.getElementById('clear-title').innerText = totalCorrect >= 100 ? '🎉 100問完全制覇なのだ！ 🎉' : '🎉 塔の完全制覇なのだ！ 🎉';
         document.getElementById('clear-score').innerText = score;
         document.getElementById('clear-correct').innerText = totalCorrect;
         document.getElementById('clear-accuracy').innerText = getAccuracy();
