@@ -567,6 +567,56 @@
         /* 掲示板は横幅いっぱいで真ん中に、🔊と？はその下の右側に並べる */
         #notice-board { flex: none; width: 100%; }
         .hud-icons { display: flex; justify-content: flex-end; gap: 8px; }
+        /* ===== プロフィール(アイコン・名札の背景・エンブレム) ===== */
+        #profile-btn { flex: none; width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.5); border: 1.5px solid #ffda44; cursor: pointer; overflow: hidden; box-shadow: 0 0 10px rgba(255,218,68,0.45); padding: 0; }
+        #profile-btn img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        #profile-screen { position: absolute; inset: 0; z-index: 2600; background: rgba(10,8,25,0.82); display: flex; align-items: center; justify-content: center; padding: 14px; }
+        .pf-open-btn { width: 100%; margin-top: 2px; padding: 10px; border: 1.5px solid #ffda44; border-radius: 14px; background: rgba(255,218,68,0.12); color: #ffe9a8; font-weight: 900; font-size: 13px; cursor: pointer; }
+        .pf-name-btn { margin: 8px auto 0; display: block; padding: 6px 14px; border: none; border-radius: 14px; background: rgba(255,255,255,0.15); color: #fff; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .pf-tabs { display: flex; gap: 6px; margin: 12px 0 8px; }
+        .pf-tabs button { flex: 1; padding: 8px 0; border: none; border-radius: 12px; background: rgba(255,255,255,0.1); color: #c9bff0; font-weight: 900; font-size: 13px; cursor: pointer; }
+        .pf-tabs button.on { background: linear-gradient(90deg, #ffda44, #ffb33d); color: #5a3b00; }
+        #pf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .pf-item { position: relative; border: 1.5px solid rgba(255,255,255,0.12); border-radius: 12px; background: rgba(255,255,255,0.07); color: #fff; padding: 8px 4px 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; font-family: inherit; }
+        .pf-item.on { border-color: #4dffb0; background: rgba(77,255,176,0.13); }
+        .pf-item.locked .pf-vis { filter: grayscale(1) brightness(0.45); }
+        .pf-item.confirm { border-color: #ffda44; background: rgba(255,218,68,0.18); }
+        .pf-vis { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; }
+        .pf-vis img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: rgba(0,0,0,0.3); }
+        .pf-vis .pf-em-big { font-size: 32px; line-height: 1; }
+        .pf-vis .pf-swatch { width: 48px; height: 30px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); }
+        .pf-iname { font-size: 10.5px; font-weight: bold; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .pf-istat { font-size: 10px; color: #ffe9a8; line-height: 1.25; }
+        .pf-item.on .pf-istat { color: #4dffb0; }
+        .pf-item.locked .pf-istat { color: #c9bff0; }
+        #pf-toast { position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%); z-index: 5; pointer-events: none; background: rgba(20,15,40,0.95); color: #ffe9a8; font-weight: 900; font-size: 14px; line-height: 1.6; padding: 12px 18px; border-radius: 16px; border: 2px solid #ffda44; text-align: center; width: max-content; max-width: 86%; opacity: 0; transition: opacity 0.25s; }
+        #pf-toast.show { opacity: 1; }
+        /* 名札(ランキングの1行・プレビュー) */
+        .pf-tag { display: flex; align-items: center; gap: 6px; padding: 4px 8px 4px 4px; border-radius: 999px; min-width: 0; text-shadow: 0 1px 2px rgba(0,0,0,0.85); color: #fff; }
+        .pf-tag .pf-ic { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex: none; background: rgba(0,0,0,0.35); border: 1.5px solid rgba(255,255,255,0.75); }
+        .pf-tag .pf-em { flex: none; font-size: 16px; line-height: 1; }
+        .pf-tag .pf-nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pf-tag .pf-sc { margin-left: auto; padding-left: 8px; font-weight: 900; color: #ffe08a; flex: none; }
+        #pf-preview .pf-tag { padding: 6px 14px 6px 6px; font-size: 16px; font-weight: 900; }
+        #pf-preview .pf-tag .pf-ic { width: 46px; height: 46px; }
+        #pf-preview .pf-tag .pf-em { font-size: 24px; }
+        .plate-plain { background: rgba(255,255,255,0.08); }
+        .plate-forest { background: linear-gradient(90deg, #1f5e3a, #3f9a6a 60%, #7fcf8f); }
+        .plate-night { background: radial-gradient(circle at 70% 30%, rgba(255,255,255,0.9) 0 1px, transparent 2px) 0 0/22px 14px, radial-gradient(circle at 20% 70%, rgba(255,255,255,0.7) 0 1px, transparent 2px) 0 0/30px 18px, linear-gradient(90deg, #0d1240, #2b2370 60%, #4a3a96); }
+        .plate-ice { background: linear-gradient(90deg, #1d5a85, #3f8fc4 55%, #a6dcff); }
+        .plate-fire { background: linear-gradient(90deg, #6e1407, #c8380c 50%, #ff9a2e); }
+        .plate-sakura { background: linear-gradient(90deg, #8f2f57, #d8668f 55%, #ffc2d6); }
+        .plate-gold { background: linear-gradient(90deg, #7a5200, #d9a521 45%, #ffe680 70%, #b8860b); box-shadow: 0 0 0 1.5px #ffe680 inset; }
+        .plate-rainbow { background: linear-gradient(90deg, #e0435a, #f08a2e, #e6c62a, #3fb76a, #3b8fe0, #7a4fd6); }
+        .pf-new { display: none; font-size: 12.5px; font-weight: bold; color: #ffe9a8; background: rgba(255,218,68,0.12); border: 1px solid rgba(255,218,68,0.5); border-radius: 12px; padding: 6px 12px; margin: 4px 0; max-width: 92%; }
+        .pf-new.show { display: block; }
+        .rank-table td.or-name { padding: 5px 2px; max-width: 0; width: 100%; }
+        .or-tabs { display: flex; gap: 5px; width: 92%; margin-bottom: 6px; }
+        .or-tabs button { flex: 1; padding: 7px 0; border: none; border-radius: 12px; background: rgba(255,255,255,0.12); color: #c9bff0; font-weight: 900; font-size: 12px; cursor: pointer; white-space: nowrap; }
+        .or-tabs button.on { background: linear-gradient(90deg, #4f8ef0, #6c5ce7); color: #fff; }
+        #online-submit-area { width: 90%; text-align: center; }
+        .or-mine-label { font-size: 11px; color: rgba(255,255,255,0.7); margin: 2px 0 4px; }
+        #or-mine .pf-tag { font-weight: 900; font-size: 14px; }
         /* ===== コンボゲージ(左端・7マス)と会心の演出 ===== */
         #combo-gauge { position: absolute; left: 4px; top: 34px; bottom: 12px; width: 13px; z-index: 9; display: flex; flex-direction: column; align-items: center; gap: 3px; pointer-events: none; }
         #combo-gauge .cg-max { font-size: 7.5px; font-weight: 900; color: rgba(255,255,255,0.35); letter-spacing: -0.3px; }
@@ -636,6 +686,7 @@
         <div id="title-hud">
         <div id="notice-board"><div id="notice-board-text">🎉 期間限定イベント開催中！　　　❄️ 季節限定クイズ登場　　　⭐ 期間限定『動物シリーズ』配信中！　　　🐉 5体ごとに強力なボスが出現するのだ！　　　👑 塔の最上階では黒竜が待っているのだ！　　　</div></div>
         <div class="hud-icons">
+            <div id="profile-btn" class="hud-round-btn" onclick="event.stopPropagation(); openProfile();"><img id="profile-btn-img" src="images/pf/hime.png" alt="プロフィール"></div>
             <div id="sound-btn" class="hud-round-btn" onclick="event.stopPropagation(); openSoundSettings();">🔊</div>
             <div id="help-btn" onclick="event.stopPropagation(); openManual();">？</div>
         </div>
@@ -652,8 +703,29 @@
             <div class="adv-progress"><div class="adv-progress-text" id="adv-progress-text"></div><div class="rt-bar"><div class="rt-fill" id="adv-progress-fill"></div></div></div>
             <div class="adv-rank" id="adv-rank"></div>
             <div id="adv-list"></div>
+            <button class="pf-open-btn" onclick="openProfile()">👤 プロフィール（アイコン・背景・エンブレム）</button>
             <div id="adv-menu-toast"></div>
             <button class="big-btn" onclick="closeAdventureMenu()" style="margin-top:10px;">とじる</button>
+        </div>
+    </div>
+
+    <div id="profile-screen" style="display:none;" onclick="if(event.target===this)closeProfile()">
+        <div class="adv-panel pf-panel">
+            <div class="adv-head">
+                <div class="adv-title">👤 プロフィール</div>
+                <div class="adv-treasury">💎 <b id="pf-gems">0</b>個</div>
+            </div>
+            <div id="pf-preview"></div>
+            <button class="pf-name-btn" onclick="editProfileName()">✏️ ランキングの名前を変える</button>
+            <div class="pf-tabs">
+                <button data-tab="icon" onclick="setProfileTab('icon')">アイコン</button>
+                <button data-tab="plate" onclick="setProfileTab('plate')">背景</button>
+                <button data-tab="emblem" onclick="setProfileTab('emblem')">エンブレム</button>
+            </div>
+            <div id="pf-grid"></div>
+            <p class="adv-help" id="pf-help">全国ランキングに送ると、名前の横にこの名札が出るのだ。💎で交換したり、強いボスを倒したりすると増えていくのだ。💎を使っても称号は下がらないのだ。</p>
+            <div id="pf-toast"></div>
+            <button class="big-btn" onclick="closeProfile()" style="margin-top:6px;">とじる</button>
         </div>
     </div>
 
@@ -690,7 +762,8 @@
         <div class="manual-card"><b>🐉 ボス戦</b><span>5体目ごとにボスが出るのだ。キングスライム、氷の女王スライム、炎の鬼、漆黒の騎士ゴーレム…そして25体目、最上階には黒竜が待っているのだ。倒すとイベントクイズが出て、正解するとアイテム(💎)がもらえるのだ。</span></div>
         <div class="manual-card"><b>🗼 塔を登る</b><span>敵を5体倒すたびに1階ずつ塔を登っていくのだ。上の階ほど問題も難しくなって、最上階の黒竜を倒せば完全制覇なのだ。</span></div>
         <div class="manual-card"><b>💎 宝物庫と新しい冒険</b><span>ボスのあとのイベントクイズに正解すると、💎が宝物庫に貯まっていくのだ。ゲームオーバーになっても💎は消えないのだ。「歴史編」「科学編」「文学編」は💎で解放できて、1つ目は5個・2つ目は10個・3つ目は15個必要なのだ。100問制覇すると💎3個のボーナスももらえるのだ。集めた💎の合計で、見習い冒険者→塔の挑戦者→塔の勇者→クイズマスター→伝説の賢者と称号も上がっていくのだ！</span></div>
-        <div class="manual-card"><b>⭐ スコアとランキング</b><span>上の段にSCOREと撃破数(💀)が出るのだ。ゲーム終了後は全国ランキングにも登録できるのだ。</span></div>
+        <div class="manual-card"><b>⭐ スコアとランキング</b><span>上の段にSCOREと撃破数(💀)が出るのだ。ゲーム終了後は全国ランキングにも登録できるのだ。全国ランキングは毎月1日に新しいシーズンが始まって、先月の上位3人は「殿堂入り」として残るのだ。これまでの記録は「歴代」で見られるのだ。</span></div>
+        <div class="manual-card"><b>👤 プロフィール</b><span>タイトル画面の右上の丸いアイコンから、ランキングの名札(アイコン・背景・エンブレム)を選べるのだ。💎で交換できるものと、ボスを倒す・10問連続正解・3回攻撃・塔の完全制覇で手に入るものがあるのだ。</span></div>
         <div class="manual-card"><b>📝 クレジット</b><span>音声：VOICEVOX:ずんだもん / VOICEVOX:もち子(cv 明日葉よもぎ)</span></div>
         <div class="manual-card contact-card"><b>📮 お問い合わせ</b><span>動かない・表示がおかしい・問題の答えが間違っている…などに気づいたら、こちらから教えてほしいのだ。</span>
             <button class="contact-btn" onclick="openContact()">📮 お問い合わせ・不具合の報告</button>
@@ -706,6 +779,7 @@
         <div style="font-size:40px; font-weight:bold; color:var(--gold); margin:5px 0; text-shadow:0 0 16px rgba(255,214,102,0.5);"><span id="final-score">0</span>点</div>
         <div class="rank-title-box" id="result-rank-box"><div class="rt-up">🎉 称号アップ！</div><div class="rt-label">あなたの称号</div><div class="rt-name"></div><div class="rt-bar"><div class="rt-fill"></div></div><div class="rt-next"></div></div>
         <div id="item-bonus-row" class="result-item-bonus" style="display:none;">💎 アイテムボーナス +<span id="item-bonus-val">0</span>点</div>
+        <div class="pf-new" id="result-pf-new"></div>
         <div class="result-sub">正解数 <span id="final-correct">0</span>問 / 正解率 <span id="final-accuracy">0</span>% / 撃破数 <span id="final-defeated">0</span>体</div>
 
         <div class="rank-table-frame"><table class="rank-table"><tbody id="rank-body"></tbody></table></div>
@@ -735,6 +809,7 @@
         <div style="font-size:32px; font-weight:bold; color:var(--gold); margin:5px 0; text-shadow:0 0 16px rgba(255,214,102,0.5);"><span id="clear-score">0</span>点</div>
         <div class="rank-title-box" id="clear-rank-box"><div class="rt-up">🎉 称号アップ！</div><div class="rt-label">あなたの称号</div><div class="rt-name"></div><div class="rt-bar"><div class="rt-fill"></div></div><div class="rt-next"></div></div>
         <div id="clear-item-bonus-row" class="result-item-bonus" style="display:none;">💎 アイテムボーナス +<span id="clear-item-bonus-val">0</span>点</div>
+        <div class="pf-new" id="clear-pf-new"></div>
         <div class="result-sub">正解数 <span id="clear-correct">0</span>問 / 正解率 <span id="clear-accuracy">0</span>% / 撃破数 <span id="clear-defeated">0</span>体</div>
         <div class="next-adventure">
             <p class="next-adv-title">▼ 次の冒険を選ぶのだ！ ▼</p>
@@ -754,11 +829,17 @@
 
     <div id="online-rank-screen" class="full-overlay" style="display:none;">
         <h2 class="result-title">🌍 全国ランキング</h2>
-        <div id="online-rank-status" style="font-size:13px; color:rgba(255,255,255,0.75); margin-bottom:10px;">読み込み中...</div>
+        <div class="or-tabs" id="or-tabs"></div>
+        <div id="online-rank-status" style="font-size:13px; color:rgba(255,255,255,0.75); margin-bottom:6px;">読み込み中...</div>
         <div class="rank-table-frame" style="width:90%; max-height:40vh; overflow-y:auto;">
             <table class="rank-table"><tbody id="online-rank-body"></tbody></table>
         </div>
-        <button class="big-btn" id="online-submit-btn" onclick="submitOnlineScore()" style="margin-top:14px;">このスコアを送信する</button>
+        <div id="online-submit-area">
+            <div class="or-mine-label">あなたの名札</div>
+            <div id="or-mine"></div>
+            <button class="pf-name-btn" onclick="openProfile()">👤 名札を変える</button>
+            <button class="big-btn" id="online-submit-btn" onclick="submitOnlineScore()" style="margin-top:8px;">このスコアを送信する</button>
+        </div>
         <button class="big-btn" onclick="closeOnlineRanking()" style="background:#eee; color:#555; box-shadow:none; margin-top:10px;">閉じる</button>
     </div>
 
@@ -1131,7 +1212,7 @@
 
     // ===== お問い合わせ(Googleフォーム) =====
     // フォームの「事前入力したURL」をここに入れる。DEVICE_INFO / GAME_STATE の部分を自動で機種情報・進み具合に置き換えて開く
-    const APP_VERSION = '1.2.1';
+    const APP_VERSION = '1.3.0';
     const CONTACT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfPKIBjtYtvE7uNDuArYMt7OVOk-fOat7ySfFI649yUNUNpSg/viewform?usp=pp_url&entry.584805071=DEVICE_INFO&entry.964317062=GAME_STATE'; // 機種の情報 / ゲームの状況
     document.getElementById('app-version-label').innerText = 'v' + APP_VERSION;
     function contactInfo() {
@@ -1328,6 +1409,7 @@
                 if(i === q.a) {
                     streak++; totalCorrect++;
                     if(streak > maxStreakThisTurn) maxStreakThisTurn = streak;
+                    if (streak >= 10) pfAchieve('combo10');
                     score += (100 + (streak > 1 ? streak * 25 : 0));
                     // コンボゲージがMAX(7連続以上)の時は、正解するたびに会心・2回攻撃・3回攻撃の抽選
                     const special = rollSpecialAttack();
@@ -1624,6 +1706,7 @@
         else if(eHp <= 0) {
             const wasBoss = isBossTurn();
             if (wasBoss) {
+                pfRecordBoss(currentEnemyDesign().name); // ボスのアイコンが手に入る
                 playSEUnderVoice('bossClear', 1);
                 showVictory();
                 playVoiceLater('bossWin', 300);
@@ -1678,6 +1761,7 @@
     function showSpecialAttack(sa) {
         const pop = document.getElementById('crit-pop'), flash = document.getElementById('crit-flash');
         pop.innerText = sa.text;
+        if (sa.type === 'triple') pfAchieve('triple');
         pop.classList.remove('show'); flash.classList.remove('show'); void pop.offsetWidth;
         pop.classList.add('show'); flash.classList.add('show');
         playSE('auraUp');
@@ -1733,6 +1817,7 @@
         document.getElementById('final-defeated').innerText = defCount;
         saveRanking('rank-body');
         showRankBox('result-rank-box');
+        showProfileNews('result-pf-new');
         document.getElementById('result-screen').style.display = 'flex';
     }
 
@@ -1899,11 +1984,13 @@
         document.getElementById('clear-defeated').innerText = defCount;
         saveRanking('clear-rank-body');
         recordClear();
+        pfAchieve('clear');
         addGems(CLEAR_GEM_BONUS);
         document.getElementById('clear-gem-total').innerText = getGems();
         document.getElementById('clear-gem-bonus').style.display = 'block';
         refreshClearCards();
         showRankBox('clear-rank-box');
+        showProfileNews('clear-pf-new');
         document.getElementById('all-clear-screen').style.display = 'flex';
     }
 
@@ -1964,10 +2051,155 @@
     }
 </script>
 
+<script>
+    // ===== プロフィール(アイコン・名札の背景・エンブレム) =====
+    // 💎で交換するもの(cost)と、条件を満たすと手に入るもの(boss=そのボスを倒す / ach=実績)がある。このスマホに保存
+    const PROFILE_KEY = 'quiztower_profile', OWNED_KEY = 'quiztower_owned', ACH_KEY = 'quiztower_ach';
+    const PF_ITEMS = {
+        icon: [
+            { id: 'hime', name: '姫', free: true }, { id: 'kerai', name: '家来', free: true }, { id: 'slime', name: 'スライム', free: true },
+            { id: 'ghost', name: 'ゴースト', cost: 2 }, { id: 'bat', name: 'こうもり', cost: 2 }, { id: 'kinoko', name: 'キノコ', cost: 2 },
+            { id: 'kurage', name: 'クラゲ', cost: 2 }, { id: 'kakashi', name: 'かかし', cost: 3 }, { id: 'iwa', name: 'いわ', cost: 3 },
+            { id: 'dragonkid', name: 'りゅうのこ', cost: 3 }, { id: 'robot', name: 'ロボット', cost: 3 },
+            { id: 'kingslime', name: 'キングスライム', boss: 'キングスライム' }, { id: 'icequeen', name: '氷の女王', boss: '氷の女王スライム' },
+            { id: 'fireoni', name: '炎の鬼', boss: '炎の鬼' }, { id: 'blackknight', name: '漆黒の騎士', boss: '漆黒の騎士ゴーレム' },
+            { id: 'kokuryu', name: '黒竜', boss: '黒竜' }, { id: 'golem', name: '石像ゴーレム', cost: 15 }
+        ],
+        plate: [
+            { id: 'plain', name: 'ふつう', free: true }, { id: 'forest', name: '森', cost: 2 }, { id: 'night', name: '夜空', cost: 3 },
+            { id: 'ice', name: '氷', cost: 5 }, { id: 'fire', name: '炎', cost: 8 }, { id: 'sakura', name: '桜', cost: 8 },
+            { id: 'gold', name: '黄金', cost: 15 }, { id: 'rainbow', name: '虹', ach: 'clear' }
+        ],
+        emblem: [
+            { id: 'none', name: 'なし', ch: '', free: true },
+            { id: 'leaf', name: '若葉', ch: '🌱', cost: 3 }, { id: 'sword', name: '剣', ch: '⚔️', cost: 5 }, { id: 'shield', name: '盾', ch: '🛡️', cost: 8 },
+            { id: 'flame', name: '炎', ch: '🔥', cost: 12 }, { id: 'gem', name: '宝石', ch: '💎', cost: 20 }, { id: 'crown', name: '王冠', ch: '👑', cost: 30 },
+            { id: 'dragon', name: '黒竜', ch: '🐉', boss: '黒竜' }, { id: 'rainbow', name: '虹', ch: '🌈', ach: 'combo10' }, { id: 'bolt', name: '稲妻', ch: '⚡', ach: 'triple' }
+        ]
+    };
+    // イベント専用ランキング(使う時だけ書き換える)。期間中はランキングに専用のタブが出る
+    // 例: var RANKING_EVENT = { id: 'halloween2026', name: '🎃ハロウィン杯', start: '2026-10-25T00:00:00+09:00', end: '2026-11-01T00:00:00+09:00' };
+    var RANKING_EVENT = null;
+    const PF_ACH_TEXT = { clear: '塔を完全制覇すると手に入る', combo10: '10問連続で正解すると手に入る', triple: '「3回攻撃」を出すと手に入る' };
+    const PF_KIND_NAME = { icon: 'アイコン', plate: '背景', emblem: 'エンブレム' };
+    function pfJson(k, def) { try { return JSON.parse(lsGet(k, '')) || def; } catch(e) { return def; } }
+    function pfFind(kind, id) { return PF_ITEMS[kind].find(it => it.id === id) || null; }
+    function getProfile() {
+        const p = pfJson(PROFILE_KEY, {});
+        const pick = (kind, def) => { const it = pfFind(kind, p[kind]); return it && pfHas(kind, it) ? it.id : def; };
+        return { name: typeof p.name === 'string' && p.name ? p.name.slice(0, 20) : '', icon: pick('icon', 'hime'), plate: pick('plate', 'plain'), emblem: pick('emblem', 'none') };
+    }
+    function saveProfile(p) { lsSet(PROFILE_KEY, JSON.stringify(p)); refreshProfileBtn(); }
+    function getAch() { const a = pfJson(ACH_KEY, {}); a.boss = a.boss || {}; return a; }
+    function pfHas(kind, it) {
+        if (it.free) return true;
+        if (it.boss) return !!getAch().boss[it.boss];
+        if (it.ach) return !!getAch()[it.ach];
+        return (pfJson(OWNED_KEY, {})[kind] || []).includes(it.id);
+    }
+    function pfHow(it) { return it.boss ? it.boss + 'を倒すと手に入る' : PF_ACH_TEXT[it.ach] || ''; }
+
+    // 実績の記録。新しく手に入ったものは結果画面で知らせる
+    let pfNewThisRun = [];
+    function pfUnlockedBy(test) {
+        const got = [];
+        Object.keys(PF_ITEMS).forEach(kind => PF_ITEMS[kind].forEach(it => { if (test(it)) got.push((it.ch ? it.ch + ' ' : '') + it.name + 'の' + PF_KIND_NAME[kind]); }));
+        return got;
+    }
+    function pfRecordBoss(name) {
+        const a = getAch(); if (a.boss[name]) return;
+        a.boss[name] = true; lsSet(ACH_KEY, JSON.stringify(a));
+        pfNewThisRun = pfNewThisRun.concat(pfUnlockedBy(it => it.boss === name));
+    }
+    function pfAchieve(key) {
+        const a = getAch(); if (a[key]) return;
+        a[key] = true; lsSet(ACH_KEY, JSON.stringify(a));
+        pfNewThisRun = pfNewThisRun.concat(pfUnlockedBy(it => it.ach === key));
+    }
+    function showProfileNews(id) {
+        const el = document.getElementById(id); if (!el || !pfNewThisRun.length) return;
+        el.innerText = '🎁 新しく手に入れたのだ！ ' + pfNewThisRun.join('・') + '（プロフィールで使えるのだ）';
+        el.classList.add('show');
+    }
+
+    // 名札のHTML(ランキング・プレビュー共通)。知らないidは使わない(送られてきたデータをそのまま入れないため)
+    function pfEscape(s) { return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+    function pfTagHTML(d, scoreText) {
+        const ic = pfFind('icon', d.icon), pl = pfFind('plate', d.plate), em = pfFind('emblem', d.emblem);
+        return '<div class="pf-tag plate-' + (pl ? pl.id : 'plain') + '">' +
+            (ic ? '<img class="pf-ic" src="images/pf/' + ic.id + '.png" alt="">' : '') +
+            (em && em.ch ? '<span class="pf-em">' + em.ch + '</span>' : '') +
+            '<span class="pf-nm">' + pfEscape(d.name || '') + '</span>' +
+            (scoreText !== undefined ? '<span class="pf-sc">' + pfEscape(scoreText) + '</span>' : '') + '</div>';
+    }
+    function refreshProfileBtn() {
+        const im = document.getElementById('profile-btn-img'); if (im) im.src = 'images/pf/' + getProfile().icon + '.png';
+        const mine = document.getElementById('or-mine'); if (mine) mine.innerHTML = pfTagHTML(pfDisplay());
+    }
+    function pfDisplay() { const p = getProfile(); return Object.assign({}, p, { name: p.name || 'ニナだもん名無し' }); }
+
+    // プロフィール画面
+    let pfTab = 'icon', pfConfirmId = null, pfToastTimer = null;
+    function openProfile() { uiSound('open'); pfConfirmId = null; renderProfile(); document.getElementById('profile-screen').style.display = 'flex'; }
+    function closeProfile() { uiSound('close'); document.getElementById('profile-screen').style.display = 'none'; refreshTreasury(); refreshProfileBtn(); }
+    function setProfileTab(t) { pfTab = t; pfConfirmId = null; uiSound('select'); renderProfile(); }
+    function pfToast(text) {
+        const t = document.getElementById('pf-toast');
+        t.innerText = text; t.classList.add('show');
+        clearTimeout(pfToastTimer); pfToastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+    function renderProfile() {
+        const p = getProfile(), gems = getGems();
+        document.getElementById('pf-gems').innerText = gems;
+        document.getElementById('pf-preview').innerHTML = pfTagHTML(pfDisplay());
+        document.querySelectorAll('.pf-tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === pfTab));
+        document.getElementById('pf-grid').innerHTML = PF_ITEMS[pfTab].map(it => {
+            const has = pfHas(pfTab, it), on = p[pfTab] === it.id;
+            let vis;
+            if (pfTab === 'icon') vis = '<img src="images/pf/' + it.id + '.png" alt="">';
+            else if (pfTab === 'plate') vis = '<div class="pf-swatch plate-' + it.id + '"></div>';
+            else vis = '<span class="pf-em-big">' + (it.ch || '－') + '</span>';
+            let stat;
+            if (on) stat = '✓ 使用中';
+            else if (has) stat = 'タップで使う';
+            else if (it.cost) stat = pfConfirmId === it.id ? 'もう一度タップで交換' : '💎' + it.cost + 'で交換';
+            else stat = '🔒 ' + pfHow(it);
+            const cls = 'pf-item' + (on ? ' on' : '') + (has ? '' : ' locked') + (pfConfirmId === it.id ? ' confirm' : '');
+            return '<button class="' + cls + '" onclick="tapProfileItem(\'' + it.id + '\')"><div class="pf-vis">' + vis + '</div><div class="pf-iname">' + it.name + '</div><div class="pf-istat">' + stat + '</div></button>';
+        }).join('');
+    }
+    function tapProfileItem(id) {
+        const it = pfFind(pfTab, id); if (!it) return;
+        const p = getProfile();
+        if (pfHas(pfTab, it)) {
+            p[pfTab] = id; saveProfile(p); pfConfirmId = null; uiSound('select');
+        } else if (it.cost) {
+            const gems = getGems();
+            if (gems < it.cost) { uiSound('close'); pfToast('💎があと' + (it.cost - gems) + '個たりないのだ！'); pfConfirmId = null; }
+            else if (pfConfirmId !== id) { pfConfirmId = id; uiSound('select'); }
+            else {
+                lsSet(GEM_TOTAL_KEY, String(getGemTotal())); // 合計を先に確定しておく(使っても称号は下がらない)
+                lsSet(GEM_KEY, String(gems - it.cost));
+                const owned = pfJson(OWNED_KEY, {}); owned[pfTab] = (owned[pfTab] || []).concat(id); lsSet(OWNED_KEY, JSON.stringify(owned));
+                p[pfTab] = id; saveProfile(p); pfConfirmId = null;
+                playSE('comboSE'); pfToast('🎉 「' + it.name + '」の' + PF_KIND_NAME[pfTab] + 'を手に入れたのだ！');
+            }
+        } else { uiSound('close'); pfToast('🔒 ' + pfHow(it) + 'のだ！'); pfConfirmId = null; }
+        renderProfile();
+    }
+    function editProfileName() {
+        const p = getProfile();
+        let n = prompt('ランキングに出すお名前は？（20文字まで）', p.name || 'ニナだもん名無し');
+        if (n === null) return;
+        n = n.trim().slice(0, 20); if (!n) return;
+        p.name = n; saveProfile(p); renderProfile();
+    }
+    refreshProfileBtn();
+</script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
     import {
-        getFirestore, collection, addDoc, query, orderBy, limit, getDocs, serverTimestamp
+        getFirestore, collection, addDoc, query, where, orderBy, limit, getDocs, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -1981,26 +2213,69 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const scoresCol = collection(db, "quiztower_scores");
     let hasSubmittedThisRun = false;
+
+    // ===== シーズン制: 毎月1日(日本時間)に新しいシーズン。記録は消さずに tags で月ごとに分ける =====
+    function seasonTag(offset) {
+        const d = new Date(Date.now() + 9 * 3600 * 1000); // 日本時間
+        d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() + offset);
+        return d.toISOString().slice(0, 7); // 例 "2026-10"
+    }
+    function seasonLabel(tag) { const [y, m] = tag.split('-'); return y + '年' + parseInt(m) + '月'; }
+    function activeEvent() {
+        const e = window.RANKING_EVENT; if (!e) return null;
+        const now = Date.now();
+        return (now >= Date.parse(e.start) && now < Date.parse(e.end)) ? e : null;
+    }
+    function tabs() {
+        const ev = activeEvent(), t = [];
+        if (ev) t.push({ key: 'event', label: ev.name, tag: 'ev:' + ev.id, max: 30, note: ev.name + 'のランキング（イベント期間中だけ）' });
+        t.push({ key: 'month', label: '今月', tag: seasonTag(0), max: 30, note: seasonLabel(seasonTag(0)) + 'シーズン（毎月1日に新しいシーズン）' });
+        t.push({ key: 'fame', label: '先月TOP3', tag: seasonTag(-1), max: 3, note: '👑 ' + seasonLabel(seasonTag(-1)) + 'シーズンの殿堂入り' });
+        t.push({ key: 'all', label: '歴代', tag: null, max: 30, note: 'これまでの全部の記録' });
+        return t;
+    }
+    let currentTab = null;
+
+    async function fetchRanking(tab) {
+        if (!tab.tag) return getDocs(query(scoresCol, orderBy("score", "desc"), limit(tab.max)));
+        try {
+            return await getDocs(query(scoresCol, where("tags", "array-contains", tab.tag), orderBy("score", "desc"), limit(tab.max)));
+        } catch (e) {
+            // Firebaseの「インデックス」をまだ作っていない時は、そのシーズンの記録を全部もらってこちらで並べる
+            if (e.code !== 'failed-precondition') throw e;
+            console.warn('インデックス未作成のため、並べ替えをこちらで行います', e.message);
+            const snap = await getDocs(query(scoresCol, where("tags", "array-contains", tab.tag), limit(500)));
+            const docs = []; snap.forEach(d => docs.push(d));
+            docs.sort((a, b) => (b.data().score || 0) - (a.data().score || 0));
+            return { forEach: f => docs.slice(0, tab.max).forEach(f) };
+        }
+    }
 
     async function loadOnlineRanking() {
         const statusEl = document.getElementById('online-rank-status');
         const bodyEl = document.getElementById('online-rank-body');
+        const all = tabs();
+        const tab = all.find(t => t.key === currentTab) || all[0];
+        currentTab = tab.key;
+        document.getElementById('or-tabs').innerHTML = all.map(t =>
+            '<button class="' + (t.key === tab.key ? 'on' : '') + '" onclick="switchRankingTab(\'' + t.key + '\')">' + escapeHtml(t.label) + '</button>').join('');
         statusEl.innerText = "読み込み中...";
         bodyEl.innerHTML = "";
         try {
-            const q = query(collection(db, "quiztower_scores"), orderBy("score", "desc"), limit(30));
-            const snap = await getDocs(q);
+            const snap = await fetchRanking(tab);
+            if (currentTab !== tab.key) return; // 読み込み中に別のタブが押された
             const medals = ["🥇", "🥈", "🥉"];
             let i = 0;
             let rows = "";
             snap.forEach(doc => {
                 const d = doc.data();
-                rows += "<tr><td>" + (medals[i] || (i+1)) + "</td><td>" + escapeHtml(d.name) + "</td><td>" + d.score + "</td></tr>";
+                rows += "<tr><td>" + (medals[i] || (i+1)) + "</td><td class='or-name'>" + pfTagHTML(d) + "</td><td>" + (parseInt(d.score) || 0) + "</td></tr>";
                 i++;
             });
-            bodyEl.innerHTML = rows || "<tr><td colspan='3'>まだ誰も送信していません</td></tr>";
-            statusEl.innerText = "接続成功！(最新30件)";
+            bodyEl.innerHTML = rows || "<tr><td colspan='3'>" + (tab.key === 'fame' ? '先月の記録はまだないのだ' : 'まだ誰も送信していないのだ。一番乗りのチャンス！') + "</td></tr>";
+            statusEl.innerText = tab.note;
         } catch (e) {
             statusEl.innerText = "オンラインに接続できませんでした(通信環境をご確認ください)";
             console.error(e);
@@ -2011,9 +2286,13 @@
         return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
     }
 
+    window.switchRankingTab = function(key) { if (key === currentTab) return; uiSound('select'); currentTab = key; loadOnlineRanking(); };
+
     window.openOnlineRanking = function() {
         document.getElementById('online-rank-screen').style.display = 'flex';
-        document.getElementById('online-submit-btn').style.display = hasSubmittedThisRun ? 'none' : 'block';
+        document.getElementById('online-submit-area').style.display = hasSubmittedThisRun ? 'none' : 'block';
+        currentTab = null;
+        refreshProfileBtn();
         loadOnlineRanking();
     };
 
@@ -2023,21 +2302,28 @@
 
     window.submitOnlineScore = async function() {
         const statusEl = document.getElementById('online-rank-status');
-        let n = prompt("全国ランキングに登録するお名前は？", "ニナだもん名無し");
+        const p = getProfile();
+        let n = prompt("全国ランキングに登録するお名前は？", p.name || "ニナだもん名無し");
+        if (n === null) return;
+        n = n.trim().slice(0, 20);
         if (!n) return;
-        n = n.slice(0, 20);
+        p.name = n; saveProfile(p);
         const currentScore = typeof score !== 'undefined' ? score : 0;
+        const ev = activeEvent();
         statusEl.innerText = "送信中...";
         try {
-            await addDoc(collection(db, "quiztower_scores"), {
+            await addDoc(scoresCol, {
                 name: n,
                 score: currentScore,
-                createdAt: serverTimestamp()
+                createdAt: serverTimestamp(),
+                tags: ev ? [seasonTag(0), 'ev:' + ev.id] : [seasonTag(0)],
+                icon: p.icon, plate: p.plate, emblem: p.emblem
             });
             hasSubmittedThisRun = true;
-            document.getElementById('online-submit-btn').style.display = 'none';
-            statusEl.innerText = "送信しました！";
-            loadOnlineRanking();
+            document.getElementById('online-submit-area').style.display = 'none';
+            currentTab = ev ? 'event' : 'month';
+            await loadOnlineRanking();
+            statusEl.innerText = "送信しました！ " + statusEl.innerText;
         } catch (e) {
             statusEl.innerText = "送信に失敗しました(通信環境をご確認ください)";
             console.error(e);
