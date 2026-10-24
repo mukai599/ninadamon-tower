@@ -775,25 +775,6 @@
         document.getElementById('loading-msg').innerText = "エラー発生なのだ...";
     };
 
-    const sounds = {
-        bgm: new Audio('sounds/bgm_thinking.mp3'),
-        bgmBoss: new Audio('sounds/bgm_boss.mp3'),
-        result: new Audio('sounds/bgm_result.mp3'),
-        clearBgm: new Audio('sounds/bgm_clear.mp3'),
-        bossRoar: new Audio('sounds/se_boss_roar.mp3'),
-        bossClear: new Audio('sounds/se_boss_clear.mp3'),
-        auraUp: new Audio('sounds/se_aura_up.mp3'),
-        ok: new Audio('sounds/se_correct.mp3'),
-        ng: new Audio('sounds/se_damage.mp3'),
-        tick: new Audio('sounds/se_tick.mp3'),
-        heal: new Audio('sounds/se_heal.mp3'),
-        defeat: new Audio('sounds/se_defeat.mp3'),
-        comboSE: new Audio('sounds/se_correct2.mp3')
-    };
-    sounds.bgmNormal = sounds.bgm;
-    // 後半まで使わない曲は、最初には読み込まない(タイトル・開始を軽くする)
-    [sounds.bgmBoss, sounds.result, sounds.clearBgm, sounds.bossClear].forEach(a => a.preload = 'none');
-
     // ===== 音のしくみ(Web Audio) と 音量設定 =====
     // iPhoneはブラウザから音量を変えられないので、音をWeb Audioに通して「音楽・ボイス・効果音」ごとに音量を調整する。
     // ファイルを直接開いた時(file://)はWeb Audioに通すと無音になるため、ふつうの音量設定で鳴らす。
@@ -828,16 +809,72 @@
         routedMedia.forEach(applyEntry);
     }
     function setVolume(kind, v) { volSettings[kind] = v; try { localStorage.setItem(VOL_KEY, JSON.stringify(volSettings)); } catch(e) {} applyVolumes(); }
-    [sounds.bgm, sounds.bgmBoss, sounds.result, sounds.clearBgm].forEach(a => routeMedia(a, 'music'));
-    ['bossRoar','bossClear','auraUp','ok','ng','tick','heal','defeat','comboSE'].forEach(k => routeMedia(sounds[k], 'se'));
-    // スマホで後から鳴らす音の準備は、開始時に一気にやらず、遊んでいるあいだのタップに合わせて少しずつ行う
-    const deferredUnlock = [sounds.bgmBoss, sounds.bossRoar, sounds.bossClear, sounds.result, sounds.clearBgm, sounds.auraUp, sounds.defeat, sounds.heal];
-    function unlockSome(n) {
-        for (let i = 0; i < n && deferredUnlock.length; i++) {
-            const a = deferredUnlock.shift();
-            try { a.preload = 'auto'; a.muted = true; const p = a.play(); if (p) p.then(() => { if (a !== sounds.bgm) { a.pause(); a.currentTime = 0; } a.muted = false; }).catch(e => { a.muted = false; }); else a.muted = false; } catch(e) { a.muted = false; }
-        }
+    // ===== 曲(BGM): プレーヤーは1つだけ。曲を差し替えて鳴らす =====
+    // iPhoneは「曲ごとに再生の許可」が要るため、1つのプレーヤーを最初のタップで許可すれば、あとはどの曲も鳴らせる
+    const MUSIC = {
+        title:  ['bgm_quiz_play', 0.25, true],
+        normal: ['bgm_thinking', 0.1, true],
+        boss:   ['bgm_boss', 0.15, true],
+        result: ['bgm_result', 1.0, false],
+        clear:  ['bgm_clear', 1.0, false]
+    };
+    const music = new Audio('sounds/' + MUSIC.title[0] + '.mp3');
+    music.preload = 'auto';
+    routeMedia(music, 'music');
+    let musicKey = 'title';
+    // ゲーム中の曲はタイトル画面のあいだに読み込んでおく(開始を速くする)
+    const musicWarmup = new Audio('sounds/' + MUSIC.normal[0] + '.mp3'); musicWarmup.preload = 'auto';
+    function setMusicTrack(key) {
+        if (musicKey === key) return;
+        music.src = 'sounds/' + MUSIC[key][0] + '.mp3';
+        musicKey = key;
     }
+    function playMusic(key) {
+        setMusicTrack(key);
+        music.loop = MUSIC[key][2]; music.volume = MUSIC[key][1];
+        try { music.currentTime = 0; } catch(e) {}
+        unlockAudio();
+        const p = music.play(); if (p) p.catch(e => {});
+    }
+    function stopMusic() { try { music.pause(); } catch(e) {} }
+    function musicPlaying(key) { return musicKey === key && !music.paused; }
+
+    // ===== 効果音: ボイスと同じく音のデータを先に読み込んで鳴らす(iPhoneでも許可取りが要らない) =====
+    const SE_FILES = { bossRoar: 'se_boss_roar', bossClear: 'se_boss_clear', auraUp: 'se_aura_up', ok: 'se_correct', ng: 'se_damage',
+                       tick: 'se_tick', heal: 'se_heal', defeat: 'se_defeat', comboSE: 'se_correct2' };
+    const USE_BUFFERS = !!actx && !IS_FILE;
+    const seBuffers = {}, seLoading = {};
+    function loadSE(k) {
+        if (!USE_BUFFERS || seBuffers[k]) return Promise.resolve();
+        if (!seLoading[k]) seLoading[k] = fetch('sounds/' + SE_FILES[k] + '.mp3').then(r => r.arrayBuffer())
+            .then(b => new Promise((res, rej) => actx.decodeAudioData(b, res, rej))).then(buf => { seBuffers[k] = buf; }).catch(e => {});
+        return seLoading[k];
+    }
+    function preloadSE() { Object.keys(SE_FILES).forEach(loadSE); }
+    window.addEventListener('load', () => setTimeout(preloadSE, 200));
+    // base: その音の大きさ(1が標準)、offset: 何秒目から鳴らすか。止めたい時のために再生中のものを返す
+    function playSE(k, base, offset) {
+        base = base === undefined ? 1 : base; offset = offset || 0;
+        if (volSettings.se <= 0) return null;
+        if (USE_BUFFERS) {
+            const buf = seBuffers[k];
+            if (!buf) { loadSE(k); return null; }
+            unlockAudio();
+            const g = actx.createGain(); g.gain.value = base;
+            const src = actx.createBufferSource(); src.buffer = buf; src.connect(g).connect(buses.se);
+            src.start(0, Math.max(0, Math.min(offset, buf.duration - 0.05)));
+            return src;
+        }
+        const a = new Audio('sounds/' + SE_FILES[k] + '.mp3'); a.volume = Math.min(1, base * volSettings.se);
+        if (offset) a.addEventListener('loadedmetadata', () => { try { a.currentTime = offset; } catch(e) {} }, { once: true });
+        const p = a.play(); if (p) p.catch(e => {});
+        return a;
+    }
+    function stopSE(node) { if (!node) return; try { node.stop ? node.stop() : node.pause(); } catch(e) {} }
+    // カウントダウン音(10秒分の1本の音)
+    let tickNode = null;
+    function startTick(offset) { stopTick(); tickNode = playSE('tick', 1, offset); }
+    function stopTick() { stopSE(tickNode); tickNode = null; }
 
     // ===== メニューの効果音(ファイルを使わず、その場で「ピコッ」「ポン」を作って鳴らす) =====
     function uiSound(type) {
@@ -904,11 +941,7 @@
     let currentVoice = null, voiceTimers = [], lastVoiceOf = {}, voiceEndsAt = 0;
     function voiceIsPlaying() { return currentVoice && Date.now() < voiceEndsAt; }
     // ボイスが鳴っている間は、撃破の「パッパン」などを小さめにして声を聞こえやすくする
-    function playSEUnderVoice(el, base) {
-        el.volume = voiceIsPlaying() ? base * 0.35 : base;
-        try { el.currentTime = 0; const p = el.play(); if (p) p.catch(e => {}); } catch(e) {}
-        if (voiceIsPlaying()) setTimeout(() => { el.volume = base; }, Math.max(0, voiceEndsAt - Date.now()) + 50);
-    }
+    function playSEUnderVoice(k, base) { playSE(k, voiceIsPlaying() ? base * 0.35 : base); }
     function stopVoices() {
         voiceTimers.forEach(clearTimeout); voiceTimers = [];
         if (currentVoice) { try { currentVoice.stop ? currentVoice.stop() : currentVoice.pause(); } catch(e) {} currentVoice = null; }
@@ -985,14 +1018,10 @@
     function isBossTurn() { return (defCount + 1) % BOSS_EVERY === 0; }
     function currentStage() { return Math.floor(defCount / BOSS_EVERY); } // 0〜4: 塔の1階〜5階
 
-    function setBgm(track) {
-        if (sounds.bgm === track) return;
-        const wasPlaying = !sounds.bgm.paused;
-        sounds.bgm.pause();
-        sounds.bgm = track;
-        track.currentTime = 0; track.loop = true;
-        track.volume = (track === sounds.bgmBoss) ? 0.15 : 0.1;
-        if (wasPlaying) track.play().catch(e=>{});
+    // 通常の曲とボス戦の曲の切り替え(一時停止中は曲だけ差し替えて、再開した時に鳴らす)
+    function setBgm(key) {
+        if (!gameStarted || musicKey === key) return; // タイトル画面ではタイトルの曲のまま
+        if (!music.paused) playMusic(key); else setMusicTrack(key);
     }
 
     const bossDesign = { name: "黒竜", img: "images/anim_boss_idle.gif", roarImg: "images/anim_boss_roar.gif", svg: enemyDesigns[3].svg };
@@ -1019,7 +1048,7 @@
     function renderEnemy(idx, opts) {
         opts = opts || {};
         const isBoss = isBossTurn();
-        setBgm(isBoss ? sounds.bgmBoss : sounds.bgmNormal);
+        setBgm(isBoss ? 'boss' : 'normal');
         const d = currentEnemyDesign();
         document.getElementById('enemy-name-tag').innerText = isBoss ? ('ボス ' + d.name) : d.name;
         document.getElementById('enemy-name-tag').classList.toggle('boss-tag', isBoss);
@@ -1035,7 +1064,7 @@
         }
         if (roaring) {
             bossIntroPose = true;
-            sounds.bossRoar.currentTime = 0; sounds.bossRoar.play().catch(e=>{});
+            playSE('bossRoar');
             // ボスの咆哮のあとに家来の気合いボイス。最上階の黒竜だけ「ついに黒竜なのだ…！」
             playVoiceLater(d === bossDesign ? 'boss_last' : 'boss', 1200);
             bossRoarTimer = setTimeout(() => {
@@ -1058,7 +1087,7 @@
 
     // ===== お問い合わせ(Googleフォーム) =====
     // フォームの「事前入力したURL」をここに入れる。DEVICE_INFO / GAME_STATE の部分を自動で機種情報・進み具合に置き換えて開く
-    const APP_VERSION = '1.1.0';
+    const APP_VERSION = '1.1.1';
     const CONTACT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfPKIBjtYtvE7uNDuArYMt7OVOk-fOat7ySfFI649yUNUNpSg/viewform?usp=pp_url&entry.584805071=DEVICE_INFO&entry.964317062=GAME_STATE'; // 機種の情報 / ゲームの状況
     document.getElementById('app-version-label').innerText = 'v' + APP_VERSION;
     function contactInfo() {
@@ -1097,7 +1126,7 @@
             unlockAudio();
             if (r.dataset.kind === 'voice') { preloadVoices(); playVoice('himeOk'); }
             else if (r.dataset.kind === 'se') uiSound('select');
-            else if (r.dataset.kind === 'music' && !gameStarted && titleBgm.paused) startTitleBgm();
+            else if (r.dataset.kind === 'music' && !gameStarted && !musicPlaying('title')) startTitleBgm();
         });
     });
 
@@ -1105,9 +1134,6 @@
     function closeManual() { uiSound('close'); document.getElementById('manual-screen').style.display = 'none'; }
 
     // タイトル画面専用のBGM(ブラウザが自動再生を止めた場合は、最初に画面を触った時に流し始める)
-    const titleBgm = new Audio('sounds/bgm_quiz_play.mp3');
-    routeMedia(titleBgm, 'music');
-    titleBgm.loop = true; titleBgm.volume = 0.25;
     let gameStarted = false;
     let titleVoicePlayed = false;
     function titleGreeting() {
@@ -1118,12 +1144,12 @@
         whenReady('hime_title1', 300); whenReady('title_2', 2800);
     }
     function startTitleBgm() {
-        if (gameStarted || !titleBgm.paused) return;
-        const p = titleBgm.play(); if (p) p.catch(e => {});
+        if (gameStarted || musicPlaying('title')) return;
+        playMusic('title');
     }
     startTitleBgm();
     // 最初に画面を触った時: タイトルBGM + 姫と家来のあいさつ(自動再生は止められるので、触ってから鳴らす)
-    const onFirstTouch = () => { unlockAudio(); preloadVoices(); startTitleBgm(); titleGreeting(); };
+    const onFirstTouch = () => { unlockAudio(); preloadSE(); preloadVoices(); startTitleBgm(); titleGreeting(); };
     ['pointerdown', 'touchstart', 'keydown'].forEach(ev => document.addEventListener(ev, onFirstTouch, { once: true, capture: true }));
 
     function startGame(genre) {
@@ -1137,13 +1163,9 @@
             document.body.classList.add('genre-mode');
         }
         gameStarted = true;
-        titleBgm.pause();
-        // 開始時にすぐ使う音だけ準備する(残りは遊んでいるあいだのタップで少しずつ)
-        [sounds.ok, sounds.ng, sounds.tick, sounds.comboSE].forEach(s => { try{ const p = s.play(); if (p) p.catch(e=>{}); s.pause(); s.currentTime=0; }catch(e){} });
-        document.addEventListener('pointerdown', () => unlockSome(2), { capture: true });
-        sounds.tick.volume = 1.0; sounds.comboSE.volume = 1.0; sounds.bgm.volume = 0.1; sounds.bgm.loop = true;
+        preloadSE();
         document.getElementById('start-screen').style.display = 'none';
-        sounds.bgm.play().catch(e => {});
+        playMusic('normal'); // タップの中で鳴らすので、iPhoneでもこのプレーヤーが以後ずっと使える
         renderEnemy(enemyIndex, {spawn:true});
         updateUI(); loadQuiz();
     }
@@ -1169,7 +1191,7 @@
         if (streak < 2) { popZunda("images/gemini_zunda_ready.png"); return; }
         const level = Math.min(streak - 1, AURA_POSES.length);
         popZunda("images/" + AURA_POSES[level - 1] + ".png");
-        if (streak - 1 <= AURA_POSES.length) { sounds.auraUp.currentTime = 0; sounds.auraUp.play().catch(e=>{}); }
+        if (streak - 1 <= AURA_POSES.length) playSE('auraUp');
     }
 
     // 塔マップの段階画像: ファイルを images/ に置くだけで、敵2体ごとに奥へ進んだ絵に切り替わる(無ければ1枚目のまま)
@@ -1264,7 +1286,7 @@
                     score += (100 + (streak > 1 ? streak * 25 : 0));
                     eHp -= 25;
                     if (eHp > 0) {
-                        sounds.ok.play().catch(e=>{});
+                        playSE('ok');
                         const visual = document.getElementById('enemy-visual');
                         const slash = document.getElementById('slash-mark');
                         visual.classList.remove('enemy-hit-anim'); void visual.offsetWidth; visual.classList.add('enemy-hit-anim');
@@ -1275,14 +1297,14 @@
                             updateEnemyLean();
                         }, 350);
                         setTimeout(() => {
-                            if (streak > 1) { sounds.comboSE.currentTime = 0; sounds.comboSE.play().catch(e=>{}); }
+                            if (streak > 1) playSE('comboSE');
                             // 1問目の正解は姫がほめる、2連続以上は家来のコンボボイス
                             playVoice(streak >= 2 ? comboVoiceGroup(streak) : 'himeOk');
                         }, 400);
                         showComboPop();
                     } else {
                         // とどめの正解でもボイスを鳴らす(あとの「パッパン」はボイス中は小さめに鳴る)
-                        sounds.ok.play().catch(e=>{});
+                        playSE('ok');
                         setTimeout(() => playVoice(streak >= 2 ? comboVoiceGroup(streak) : 'himeOk'), 300);
                     }
                     showAttackPose();
@@ -1290,7 +1312,7 @@
                     checkComboBonus();
                     const hpBefore = hp;
                     streak = 0; maxStreakThisTurn = 0; hp -= 20; totalWrong++; missedPool.push(q);
-                    sounds.ng.play().catch(e=>{});
+                    playSE('ng');
                     // HPが30以下に落ちた瞬間は「ピンチ」、それ以外は「まちがえた」
                     playVoiceLater(hpBefore > 30 && hp <= 30 && hp > 0 ? 'pinch' : 'miss', 350);
                     popZunda("images/anim_dizzy.gif");
@@ -1369,12 +1391,12 @@
         if (correct) {
             itemCount++;
             addGems(1); // 宝物庫(このスマホに保存)にも貯める
-            sounds.ok.play().catch(e=>{});
+            playSE('ok');
             updateUI();
             showItemGet();
             playVoiceLater('gem', 200);
         } else {
-            sounds.ng.play().catch(e=>{});
+            playSE('ng');
             b.innerText = (timeout ? "時間切れ…" : "ざんねん！") + "\nアイテムならず\n正解は「" + q.c[q.a] + "」";
             b.style.display = "block";
             setTimeout(() => { b.style.display = "none"; }, 1500);
@@ -1421,7 +1443,7 @@
     function stopTimer() {
         clearInterval(timerId);
         timerRunning = false; timerPausedAt = 0;
-        try { sounds.tick.pause(); } catch(e) {}
+        stopTick();
     }
     function startTimer() {
         stopTimer();
@@ -1429,7 +1451,7 @@
         timerLimit = timeLimitMs();
         timerRunning = true;
         // カウントダウン音は10秒分あるので、制限時間が短いレベルでは途中から流して、バーと同時に鳴り終わるようにする
-        try { sounds.tick.currentTime = Math.max(0, 10 - timerLimit / 1000); const p = sounds.tick.play(); if (p) p.catch(e=>{}); } catch(e) {}
+        startTick(Math.max(0, 10 - timerLimit / 1000));
         timerId = setInterval(timerStep, 50);
     }
     // スリープ・アプリ切り替え・横向き画面のあいだはタイマーを止め、戻ったら残り時間から再開する
@@ -1437,14 +1459,14 @@
         if (!timerRunning || timerPausedAt) return;
         timerPausedAt = performance.now();
         clearInterval(timerId);
-        try { sounds.tick.pause(); } catch(e) {}
+        stopTick();
     }
     function resumeTimer() {
         if (!timerRunning || !timerPausedAt) return;
         timerT0 += performance.now() - timerPausedAt;
         timerPausedAt = 0;
         const elapsed = (performance.now() - timerT0) / 1000;
-        try { sounds.tick.currentTime = Math.max(0, 10 - timerLimit / 1000) + elapsed; const p = sounds.tick.play(); if (p) p.catch(e=>{}); } catch(e) {}
+        startTick(Math.max(0, 10 - timerLimit / 1000) + elapsed);
         timerId = setInterval(timerStep, 50);
     }
     function timerStep() {
@@ -1471,7 +1493,7 @@
     }
 
     // ===== スリープ・アプリ切り替え・横向き: 音を止めてタイマーも一時停止 =====
-    let pausedAudios = [];
+    let musicWasPlaying = false;
     let pauseMenuOpen = false;
     // ゲーム中の「？」: 一時停止してメニューを出す(報告フォームを開いて戻ってきても、続けるを押すまで止まったまま)
     function openPauseMenu() {
@@ -1492,15 +1514,15 @@
         pauseTimer();
         stopVoices();
         if (actx && actx.state === 'running') actx.suspend().catch(e => {});
-        pausedAudios = [...Object.values(sounds), titleBgm].filter(a => a && !a.paused && a !== sounds.tick);
-        pausedAudios.forEach(a => a.pause());
+        musicWasPlaying = !music.paused;
+        stopMusic();
     }
     function resumeGame() {
         if (!isPaused || document.hidden || isLandscapePhone() || pauseMenuOpen) return;
         isPaused = false;
         unlockAudio();
-        pausedAudios.forEach(a => { const p = a.play(); if (p) p.catch(e=>{}); });
-        pausedAudios = [];
+        if (musicWasPlaying) { const p = music.play(); if (p) p.catch(e=>{}); }
+        musicWasPlaying = false;
         resumeTimer();
     }
     function checkPause() { (document.hidden || isLandscapePhone()) ? pauseGame() : resumeGame(); }
@@ -1551,12 +1573,12 @@
         else if(eHp <= 0) {
             const wasBoss = isBossTurn();
             if (wasBoss) {
-                playSEUnderVoice(sounds.bossClear, 1);
+                playSEUnderVoice('bossClear', 1);
                 showVictory();
                 playVoiceLater('bossWin', 300);
                 playVoiceLater('himeBossWin', 1900);
             } else {
-                playSEUnderVoice(sounds.defeat, 1);
+                playSEUnderVoice('defeat', 1);
             }
             checkComboBonus();
             let hb = hp * 10, mb = mochi * 200, tb = 500 + hb + mb;
@@ -1608,8 +1630,8 @@
 
     // ▼▼▼ 音声修正ポイント ▼▼▼
     function endGame() {
-        stopTimer(); sounds.bgm.pause();
-        sounds.result.currentTime = 0; sounds.result.play().catch(e=>{});
+        stopTimer();
+        playMusic('result');
         // 結果発表時にボイスを再生
         stopVoices(); playVoiceLater('over_1', 500); playVoiceLater('hime_over', 3800);
         let bonus = applyItemBonus();
@@ -1747,7 +1769,7 @@
         lsSet(GEM_TOTAL_KEY, String(getGemTotal())); // 合計を先に確定しておく(使っても減らない)
         lsSet(GEM_KEY, String(getGems() - cost));
         lsSet(UNLOCK_KEY, JSON.stringify(getUnlocked().concat(k)));
-        try { sounds.comboSE.currentTime = 0; sounds.comboSE.play().catch(e=>{}); } catch(e) {}
+        playSE('comboSE');
         renderAdventureList();
         advMenuToast('🎉 ' + GENRES[k].name + 'が解放されたのだ！');
         playVoice('hime_unlock'); playVoiceLater('unlock_1', 3300);
@@ -1773,8 +1795,8 @@
     if (/[?&]adventure=1/.test(location.search)) { history.replaceState(null, '', location.pathname); openAdventureMenu(); }
 
     function showAllClearScreen() {
-        stopTimer(); sounds.bgm.pause();
-        sounds.clearBgm.currentTime = 0; sounds.clearBgm.play().catch(e=>{});
+        stopTimer();
+        playMusic('clear');
         // オールクリア時に一番盛り上がるボイスを再生
         stopVoices(); playVoiceLater('clear_1', 500); playVoiceLater('hime_clear', 3900);
         let bonus = applyItemBonus();
@@ -1802,7 +1824,7 @@
         if (ranks.length < 3 || score > (ranks[ranks.length-1]?.score || 0)) {
             // ▼▼▼ 音声修正ポイント ▼▼▼
             // ランクイン時にファンファーレ音を再生
-            sounds.comboSE.currentTime = 0; sounds.comboSE.play().catch(e=>{});
+            playSE('comboSE');
             let n = prompt("ランクイン！お名前は？", "ニナだもん名無し");
             if (n) { ranks.push({name: n, score: score}); ranks.sort((a,b) => b.score - a.score); ranks = ranks.slice(0, 3); localStorage.setItem(rankKey(), JSON.stringify(ranks)); }
         }
@@ -1838,7 +1860,7 @@
     document.getElementById('start-screen').addEventListener('pointerdown', () => { if (!storyEl.classList.contains('show')) scheduleStory(); });
     scheduleStory();
     document.getElementById('btn-mochi').onclick = function() {
-        if(mochi > 0 && hp < 100) { mochi--; hp = Math.min(hp + 50, 100); sounds.heal.play().catch(e=>{}); playVoiceLater('heal', 250); updateUI();
+        if(mochi > 0 && hp < 100) { mochi--; hp = Math.min(hp + 50, 100); playSE('heal'); playVoiceLater('heal', 250); updateUI();
             // 困った・やばい顔のときに回復したら、HPに合ったポーズに戻す
             const cur = document.getElementById('main-illust').src;
             if (/anim_(nervous|pinch)/.test(cur) && !cur.includes(idlePose().split('/').pop())) popZunda(idlePose()); }
