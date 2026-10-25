@@ -95,6 +95,7 @@
             background:none; border:none; transition: transform 0.25s ease-out;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
         }
+        #main-illust.fall { width:min(235px, calc(100cqh * 1.25)); height:min(196px, calc(100cqh - 30px)); animation:none; }
         .player-hp-mini {
             width:76px; background:rgba(255,255,255,0.85); border-radius:20px;
             padding:3px 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.12);
@@ -1212,7 +1213,7 @@
 
     // ===== お問い合わせ(Googleフォーム) =====
     // フォームの「事前入力したURL」をここに入れる。DEVICE_INFO / GAME_STATE の部分を自動で機種情報・進み具合に置き換えて開く
-    const APP_VERSION = '1.3.0';
+    const APP_VERSION = '1.3.1';
     const CONTACT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfPKIBjtYtvE7uNDuArYMt7OVOk-fOat7ySfFI649yUNUNpSg/viewform?usp=pp_url&entry.584805071=DEVICE_INFO&entry.964317062=GAME_STATE'; // 機種の情報 / ゲームの状況
     document.getElementById('app-version-label').innerText = 'v' + APP_VERSION;
     function contactInfo() {
@@ -1303,6 +1304,16 @@
         img.classList.add('zunda-pop');
         setTimeout(() => { img.classList.remove('zunda-pop'); img.classList.add('zunda-idle'); }, 350);
     }
+
+    // HPが0になった時: 目を回して倒れるアニメ(約3.5秒・1回だけ再生してから結果発表へ)
+    function playFall() {
+        const img = document.getElementById('main-illust');
+        img.classList.remove('zunda-idle', 'zunda-pop');
+        img.classList.add('fall');
+        img.src = 'images/anim_fall.gif?t=' + Date.now();
+        setTimeout(() => playSE('ng'), 2200); // ドサッと倒れるタイミング
+    }
+    new Image().src = 'images/anim_fall.gif'; // 倒れる時にすぐ出せるよう先に読み込んでおく
 
     // 問題を考えている時のポーズはHPで変わる: 通常は「考える」、HP60以下は「困った」、HP30以下は「やばい」
     function idlePose() {
@@ -1702,7 +1713,7 @@
     }
 
     function checkBattle() {
-        if(hp <= 0) { setTimeout(endGame, 1000); }
+        if(hp <= 0) { playFall(); setTimeout(endGame, 3500); }
         else if(eHp <= 0) {
             const wasBoss = isBossTurn();
             if (wasBoss) {
