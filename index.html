@@ -609,6 +609,19 @@
         .plate-sakura { background: linear-gradient(90deg, #8f2f57, #d8668f 55%, #ffc2d6); }
         .plate-gold { background: linear-gradient(90deg, #7a5200, #d9a521 45%, #ffe680 70%, #b8860b); box-shadow: 0 0 0 1.5px #ffe680 inset; }
         .plate-rainbow { background: linear-gradient(90deg, #e0435a, #f08a2e, #e6c62a, #3fb76a, #3b8fe0, #7a4fd6); }
+        .pf-tabs button { font-size: 12px; padding: 8px 0; white-space: nowrap; }
+        .pf-bgm-note { grid-column: 1 / -1; font-size: 11.5px; color: #c9bff0; text-align: left; line-height: 1.5; margin-bottom: 2px; }
+        .pf-bgm-lock { grid-column: 1 / -1; padding: 10px; border-radius: 12px; border: 1.5px solid #ffda44; background: rgba(255,218,68,0.14); color: #ffe9a8; font-weight: 900; font-size: 13px; cursor: pointer; font-family: inherit; }
+        .pf-bgm-lock.confirm { background: linear-gradient(90deg, #ffda44, #ffb33d); color: #5a3b00; }
+        .pf-bgm { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.07); color: #fff; cursor: pointer; text-align: left; font-family: inherit; }
+        .pf-bgm.on { border-color: #4dffb0; background: rgba(77,255,176,0.13); }
+        .pf-bgm.locked { opacity: 0.55; }
+        .pf-bgm .pf-bgm-ic { font-size: 22px; flex: none; }
+        .pf-bgm .pf-bgm-t { flex: 1; min-width: 0; }
+        .pf-bgm .pf-bgm-n { font-weight: 900; font-size: 14px; }
+        .pf-bgm .pf-bgm-d { font-size: 11px; color: #c9bff0; margin-top: 1px; }
+        .pf-bgm .pf-bgm-s { flex: none; font-size: 11px; font-weight: bold; color: #ffe9a8; }
+        .pf-bgm.on .pf-bgm-s { color: #4dffb0; }
         .pf-new { display: none; font-size: 12.5px; font-weight: bold; color: #ffe9a8; background: rgba(255,218,68,0.12); border: 1px solid rgba(255,218,68,0.5); border-radius: 12px; padding: 6px 12px; margin: 4px 0; max-width: 92%; }
         .pf-new.show { display: block; }
         .rank-table td.or-name { padding: 5px 2px; max-width: 0; width: 100%; }
@@ -722,6 +735,7 @@
                 <button data-tab="icon" onclick="setProfileTab('icon')">アイコン</button>
                 <button data-tab="plate" onclick="setProfileTab('plate')">背景</button>
                 <button data-tab="emblem" onclick="setProfileTab('emblem')">エンブレム</button>
+                <button data-tab="bgm" onclick="setProfileTab('bgm')">🎵 BGM</button>
             </div>
             <div id="pf-grid"></div>
             <p class="adv-help" id="pf-help">全国ランキングに送ると、名前の横にこの名札が出るのだ。💎で交換したり、強いボスを倒したりすると増えていくのだ。💎を使っても称号は下がらないのだ。</p>
@@ -764,6 +778,7 @@
         <div class="manual-card"><b>🗼 塔を登る</b><span>敵を5体倒すたびに1階ずつ塔を登っていくのだ。上の階ほど問題も難しくなって、最上階の黒竜を倒せば完全制覇なのだ。</span></div>
         <div class="manual-card"><b>💎 宝物庫と新しい冒険</b><span>ボスのあとのイベントクイズに正解すると、💎が宝物庫に貯まっていくのだ。ゲームオーバーになっても💎は消えないのだ。「歴史編」「科学編」「文学編」は💎で解放できて、1つ目は5個・2つ目は10個・3つ目は15個必要なのだ。100問制覇すると💎3個のボーナスももらえるのだ。集めた💎の合計で、見習い冒険者→塔の挑戦者→塔の勇者→クイズマスター→伝説の賢者と称号も上がっていくのだ！</span></div>
         <div class="manual-card"><b>⭐ スコアとランキング</b><span>上の段にSCOREと撃破数(💀)が出るのだ。ゲーム終了後は全国ランキングにも登録できるのだ。全国ランキングは毎月1日に新しいシーズンが始まって、先月の上位3人は「殿堂入り」として残るのだ。これまでの記録は「歴代」で見られるのだ。</span></div>
+        <div class="manual-card"><b>🎵 BGMチェンジ</b><span>💎を20個つかうと、プロフィールの「BGM」から、ゲーム中の曲を4曲の中から選べるようになるのだ。</span></div>
         <div class="manual-card"><b>👤 プロフィール</b><span>タイトル画面の右上の丸いアイコンから、ランキングの名札(アイコン・背景・エンブレム)を選べるのだ。💎で交換できるものと、ボスを倒す・10問連続正解・3回攻撃・塔の完全制覇で手に入るものがあるのだ。</span></div>
         <div class="manual-card"><b>📝 クレジット</b><span>音声：VOICEVOX:ずんだもん / VOICEVOX:もち子(cv 明日葉よもぎ)</span></div>
         <div class="manual-card contact-card"><b>📮 お問い合わせ</b><span>動かない・表示がおかしい・問題の答えが間違っている…などに気づいたら、こちらから教えてほしいのだ。</span>
@@ -937,6 +952,15 @@
     function setVolume(kind, v) { volSettings[kind] = v; try { localStorage.setItem(VOL_KEY, JSON.stringify(volSettings)); } catch(e) {} applyVolumes(); }
     // ===== 曲(BGM): プレーヤーは1つだけ。曲を差し替えて鳴らす =====
     // iPhoneは「曲ごとに再生の許可」が要るため、1つのプレーヤーを最初のタップで許可すれば、あとはどの曲も鳴らせる
+    // ゲーム中の曲は、💎20個で「BGMチェンジ」を解放すると4曲から選べる(volは曲ごとの音の大きさをそろえた値)
+    const BGM_COST = 20, BGM_KEY = 'quiztower_bgm', BGM_UNLOCK_KEY = 'quiztower_bgm_unlocked';
+    const BGM_TRACKS = [
+        { id: 'default', name: 'いつもの曲', desc: 'ニナだもんの標準BGM', file: 'bgm_thinking', vol: 0.1 },
+        { id: 'alt1', name: 'アップテンポ', desc: 'BPM145・元気にバトル', file: 'bgm_alt1', vol: 0.108 },
+        { id: 'alt2', name: 'ハイテンポ', desc: 'BPM150・かけぬける感じ', file: 'bgm_alt2', vol: 0.085 },
+        { id: 'alt3', name: 'ゆったり', desc: 'BPM80・おちついて考えたい人に', file: 'bgm_alt3', vol: 0.122 },
+        { id: 'alt4', name: 'ボーカル曲', desc: '歌入り・にぎやか', file: 'bgm_alt4', vol: 0.12 }
+    ];
     const MUSIC = {
         title:  ['bgm_quiz_play', 0.25, true],
         normal: ['bgm_thinking', 0.1, true],
@@ -944,6 +968,12 @@
         result: ['bgm_result', 1.0, false],
         clear:  ['bgm_clear', 1.0, false]
     };
+    try { // 保存してある曲を、ゲーム中の曲にする(先に読み込みを始める前に決める)
+        if (localStorage.getItem(BGM_UNLOCK_KEY) === '1') {
+            const t = BGM_TRACKS.find(x => x.id === localStorage.getItem(BGM_KEY));
+            if (t) { MUSIC.normal[0] = t.file; MUSIC.normal[1] = t.vol; }
+        }
+    } catch(e) {}
     const music = new Audio('sounds/' + MUSIC.title[0] + '.mp3');
     music.preload = 'auto';
     routeMedia(music, 'music');
@@ -1213,7 +1243,7 @@
 
     // ===== お問い合わせ(Googleフォーム) =====
     // フォームの「事前入力したURL」をここに入れる。DEVICE_INFO / GAME_STATE の部分を自動で機種情報・進み具合に置き換えて開く
-    const APP_VERSION = '1.3.1';
+    const APP_VERSION = '1.4.0';
     const CONTACT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfPKIBjtYtvE7uNDuArYMt7OVOk-fOat7ySfFI649yUNUNpSg/viewform?usp=pp_url&entry.584805071=DEVICE_INFO&entry.964317062=GAME_STATE'; // 機種の情報 / ゲームの状況
     document.getElementById('app-version-label').innerText = 'v' + APP_VERSION;
     function contactInfo() {
@@ -2152,18 +2182,66 @@
     // プロフィール画面
     let pfTab = 'icon', pfConfirmId = null, pfToastTimer = null;
     function openProfile() { uiSound('open'); pfConfirmId = null; renderProfile(); document.getElementById('profile-screen').style.display = 'flex'; }
-    function closeProfile() { uiSound('close'); document.getElementById('profile-screen').style.display = 'none'; refreshTreasury(); refreshProfileBtn(); }
-    function setProfileTab(t) { pfTab = t; pfConfirmId = null; uiSound('select'); renderProfile(); }
+    function closeProfile() { uiSound('close'); bgmEndPreview(); document.getElementById('profile-screen').style.display = 'none'; refreshTreasury(); refreshProfileBtn(); }
+    function setProfileTab(t) { pfTab = t; pfConfirmId = null; if (t !== 'bgm') bgmEndPreview(); uiSound('select'); renderProfile(); }
     function pfToast(text) {
         const t = document.getElementById('pf-toast');
         t.innerText = text; t.classList.add('show');
         clearTimeout(pfToastTimer); pfToastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+    // ===== BGMチェンジ(ゲーム中の曲を選ぶ) =====
+    let bgmPreviewing = false, bgmWasPlaying = false;
+    function bgmUnlocked() { return lsGet(BGM_UNLOCK_KEY, '0') === '1'; }
+    function bgmSelectedId() { const t = BGM_TRACKS.find(x => x.id === lsGet(BGM_KEY, 'default')); return bgmUnlocked() && t ? t.id : 'default'; }
+    function bgmPreview(t) {
+        if (!bgmPreviewing) { bgmWasPlaying = !music.paused; bgmPreviewing = true; }
+        music.src = 'sounds/' + t.file + '.mp3'; music.loop = true; music.volume = t.vol;
+        unlockAudio(); const pr = music.play(); if (pr) pr.catch(() => {});
+    }
+    function bgmEndPreview() { // 試し聴きをやめて、タイトルの曲にもどす
+        if (!bgmPreviewing) return; bgmPreviewing = false;
+        music.src = 'sounds/' + MUSIC[musicKey][0] + '.mp3'; music.loop = MUSIC[musicKey][2]; music.volume = MUSIC[musicKey][1];
+        if (bgmWasPlaying) { const pr = music.play(); if (pr) pr.catch(() => {}); } else stopMusic();
+    }
+    function applyBgmChoice(t) { MUSIC.normal[0] = t.file; MUSIC.normal[1] = t.vol; }
+    function renderBgm() {
+        const unlocked = bgmUnlocked(), sel = bgmSelectedId(), gems = getGems();
+        let h = '<div class="pf-bgm-note">ゲーム中(ふつうの敵と戦っている間)の曲を選べるのだ。ボス戦・結果発表・タイトルの曲は、そのままなのだ。</div>';
+        if (!unlocked) {
+            h += '<button class="pf-bgm-lock' + (pfConfirmId === 'bgm' ? ' confirm' : '') + '" onclick="tapBgm(\'unlock\')">' +
+                (pfConfirmId === 'bgm' ? '🎵 もう一度タップで💎' + BGM_COST + '個をつかって解放' : '🔒 BGMチェンジを解放する（💎' + BGM_COST + '個）') + '</button>';
+        }
+        h += BGM_TRACKS.map(t => {
+            const ok = unlocked || t.id === 'default', on = sel === t.id;
+            return '<button class="pf-bgm' + (on ? ' on' : '') + (ok ? '' : ' locked') + '" onclick="tapBgm(\'' + t.id + '\')"><span class="pf-bgm-ic">' + (on ? '🔊' : '🎵') + '</span>' +
+                '<span class="pf-bgm-t"><div class="pf-bgm-n">' + t.name + '</div><div class="pf-bgm-d">' + t.desc + '</div></span>' +
+                '<span class="pf-bgm-s">' + (on ? '✓ 使用中' : ok ? 'タップで試し聴き＆使う' : '🔒') + '</span></button>';
+        }).join('');
+        document.getElementById('pf-grid').innerHTML = h;
+    }
+    function tapBgm(id) {
+        if (id === 'unlock') {
+            const gems = getGems();
+            if (gems < BGM_COST) { uiSound('close'); pfToast('💎があと' + (BGM_COST - gems) + '個たりないのだ！'); pfConfirmId = null; }
+            else if (pfConfirmId !== 'bgm') { pfConfirmId = 'bgm'; uiSound('select'); }
+            else {
+                lsSet(GEM_TOTAL_KEY, String(getGemTotal()));
+                lsSet(GEM_KEY, String(gems - BGM_COST)); lsSet(BGM_UNLOCK_KEY, '1'); pfConfirmId = null;
+                playSE('comboSE'); pfToast('🎉 BGMチェンジが解放されたのだ！好きな曲を選ぶのだ');
+            }
+            document.getElementById('pf-gems').innerText = getGems();
+            renderBgm(); return;
+        }
+        const t = BGM_TRACKS.find(x => x.id === id); if (!t) return;
+        if (!bgmUnlocked() && id !== 'default') { uiSound('close'); pfToast('🔒 💎' + BGM_COST + '個でBGMチェンジを解放すると選べるのだ'); return; }
+        lsSet(BGM_KEY, id); applyBgmChoice(t); bgmPreview(t); renderBgm();
     }
     function renderProfile() {
         const p = getProfile(), gems = getGems();
         document.getElementById('pf-gems').innerText = gems;
         document.getElementById('pf-preview').innerHTML = pfTagHTML(pfDisplay());
         document.querySelectorAll('.pf-tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === pfTab));
+        if (pfTab === 'bgm') { renderBgm(); return; }
         document.getElementById('pf-grid').innerHTML = PF_ITEMS[pfTab].map(it => {
             const has = pfHas(pfTab, it), on = p[pfTab] === it.id;
             let vis;
