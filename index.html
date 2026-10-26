@@ -1243,7 +1243,7 @@
 
     // ===== お問い合わせ(Googleフォーム) =====
     // フォームの「事前入力したURL」をここに入れる。DEVICE_INFO / GAME_STATE の部分を自動で機種情報・進み具合に置き換えて開く
-    const APP_VERSION = '1.4.0';
+    const APP_VERSION = '1.4.1';
     const CONTACT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfPKIBjtYtvE7uNDuArYMt7OVOk-fOat7ySfFI649yUNUNpSg/viewform?usp=pp_url&entry.584805071=DEVICE_INFO&entry.964317062=GAME_STATE'; // 機種の情報 / ゲームの状況
     document.getElementById('app-version-label').innerText = 'v' + APP_VERSION;
     function contactInfo() {
@@ -1335,15 +1335,15 @@
         setTimeout(() => { img.classList.remove('zunda-pop'); img.classList.add('zunda-idle'); }, 350);
     }
 
-    // HPが0になった時: 目を回して倒れるアニメ(約3.5秒・1回だけ再生してから結果発表へ)
+    // HPが0になった時: 目を回して倒れるアニメ(Gensparkで作成・1回だけ再生して約3秒後に結果発表へ)
     function playFall() {
         const img = document.getElementById('main-illust');
         img.classList.remove('zunda-idle', 'zunda-pop');
         img.classList.add('fall');
-        img.src = 'images/anim_fall.gif?t=' + Date.now();
-        setTimeout(() => playSE('ng'), 2200); // ドサッと倒れるタイミング
+        img.src = 'images/anim_gameover.gif?t=' + Date.now();
+        setTimeout(() => playSE('ng'), 900); // ドサッと倒れるタイミング
     }
-    new Image().src = 'images/anim_fall.gif'; // 倒れる時にすぐ出せるよう先に読み込んでおく
+    new Image().src = 'images/anim_gameover.gif'; // 倒れる時にすぐ出せるよう先に読み込んでおく
 
     // 問題を考えている時のポーズはHPで変わる: 通常は「考える」、HP60以下は「困った」、HP30以下は「やばい」
     function idlePose() {
@@ -1743,7 +1743,7 @@
     }
 
     function checkBattle() {
-        if(hp <= 0) { playFall(); setTimeout(endGame, 3500); }
+        if(hp <= 0) { playFall(); setTimeout(endGame, 3000); }
         else if(eHp <= 0) {
             const wasBoss = isBossTurn();
             if (wasBoss) {
