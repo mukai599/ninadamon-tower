@@ -698,7 +698,7 @@
         <div id="tap-start-badge">タップしてスタート</div>
         <div id="tap-start-catch">100問の豆知識で、塔のてっぺんを目指すのだ！</div>
         <div id="title-hud">
-        <div id="notice-board"><div id="notice-board-text">🎉 期間限定イベント開催中！　　　❄️ 季節限定クイズ登場　　　⭐ 期間限定『動物シリーズ』配信中！　　　🐉 5体ごとに強力なボスが出現するのだ！　　　👑 塔の最上階では黒竜が待っているのだ！　　　</div></div>
+        <div id="notice-board"><div id="notice-board-text"></div></div>
         <div class="hud-icons">
             <div id="profile-btn" class="hud-round-btn" onclick="event.stopPropagation(); openProfile();"><img id="profile-btn-img" src="images/pf/hime.png" alt="プロフィール"></div>
             <div id="sound-btn" class="hud-round-btn" onclick="event.stopPropagation(); openSoundSettings();">🔊</div>
@@ -778,6 +778,7 @@
         <div class="manual-card"><b>🗼 塔を登る</b><span>敵を5体倒すたびに1階ずつ塔を登っていくのだ。上の階ほど問題も難しくなって、最上階の黒竜を倒せば完全制覇なのだ。</span></div>
         <div class="manual-card"><b>💎 宝物庫と新しい冒険</b><span>ボスのあとのイベントクイズに正解すると、💎が宝物庫に貯まっていくのだ。ゲームオーバーになっても💎は消えないのだ。「歴史編」「科学編」「文学編」は💎で解放できて、1つ目は5個・2つ目は10個・3つ目は15個必要なのだ。100問制覇すると💎3個のボーナスももらえるのだ。集めた💎の合計で、見習い冒険者→塔の挑戦者→塔の勇者→クイズマスター→伝説の賢者と称号も上がっていくのだ！</span></div>
         <div class="manual-card"><b>⭐ スコアとランキング</b><span>上の段にSCOREと撃破数(💀)が出るのだ。ゲーム終了後は全国ランキングにも登録できるのだ。全国ランキングは毎月1日に新しいシーズンが始まって、先月の上位3人は「殿堂入り」として残るのだ。これまでの記録は「歴代」で見られるのだ。</span></div>
+        <div class="manual-card"><b>🍁 月替わりイベント</b><span>月が替わると、本編のクイズが「イベントクイズ」に入れかわることがあるのだ。11月はアニメ・経済・ゲーム・スポーツ・音楽・映画やドラマ・グルメ・ITから出題されるのだ。イベント中は、全国ランキングにもイベント専用のタブができるのだ。</span></div>
         <div class="manual-card"><b>🎵 BGMチェンジ</b><span>💎を20個つかうと、プロフィールの「BGM」から、ゲーム中の曲を4曲の中から選べるようになるのだ。</span></div>
         <div class="manual-card"><b>👤 プロフィール</b><span>タイトル画面の右上の丸いアイコンから、ランキングの名札(アイコン・背景・エンブレム)を選べるのだ。💎で交換できるものと、ボスを倒す・10問連続正解・3回攻撃・塔の完全制覇で手に入るものがあるのだ。</span></div>
         <div class="manual-card"><b>📝 クレジット</b><span>音声：VOICEVOX:ずんだもん / VOICEVOX:もち子(cv 明日葉よもぎ)</span></div>
@@ -909,6 +910,7 @@
 </div>
 
 <script src="questions/genres.js"></script>
+<script src="questions/event_2026_11.js"></script>
 <script>
     window.onerror = function(m, u, l) {
         document.getElementById('err-log').style.display = 'block';
@@ -1243,7 +1245,7 @@
 
     // ===== お問い合わせ(Googleフォーム) =====
     // フォームの「事前入力したURL」をここに入れる。DEVICE_INFO / GAME_STATE の部分を自動で機種情報・進み具合に置き換えて開く
-    const APP_VERSION = '1.4.1';
+    const APP_VERSION = '1.5.0';
     const CONTACT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfPKIBjtYtvE7uNDuArYMt7OVOk-fOat7ySfFI649yUNUNpSg/viewform?usp=pp_url&entry.584805071=DEVICE_INFO&entry.964317062=GAME_STATE'; // 機種の情報 / ゲームの状況
     document.getElementById('app-version-label').innerText = 'v' + APP_VERSION;
     function contactInfo() {
@@ -1317,6 +1319,9 @@
         if (genre !== 'main') {
             currentPool = JSON.parse(JSON.stringify(window.GENRE_QUIZ[genre]));
             document.body.classList.add('genre-mode');
+        } else if (mainEvent()) {
+            runEvent = mainEvent();
+            currentPool = JSON.parse(JSON.stringify(runEvent.data));
         }
         gameStarted = true;
         preloadSE();
@@ -1928,9 +1933,26 @@
         if (ri.idx > rankAtStart) { playVoiceLater('hime_rankup', 3600); playVoiceLater('rankup_1', 7000); }
         setTimeout(() => { box.querySelector('.rt-fill').style.width = Math.round(ri.progress * 100) + '%'; }, 300);
     }
+    // ===== 月替わりイベント: 期間中は、本編のクイズがイベント用の問題に入れかわる(questions/event_*.js) =====
+    function mainEvent() {
+        try { const now = Date.now(); return (window.EVENT_QUIZ_LIST || []).find(e => e.data && now >= Date.parse(e.start) && now < Date.parse(e.end)) || null; } catch(e) { return null; }
+    }
+    function upcomingEvent() { // 始まる7日前から、掲示板でお知らせする
+        try { const now = Date.now(); return (window.EVENT_QUIZ_LIST || []).find(e => e.data && Date.parse(e.start) > now && Date.parse(e.start) - now < 7 * 86400000) || null; } catch(e) { return null; }
+    }
+    let runEvent = null; // 今の遊びが、イベントの問題かどうか
+    function refreshNotice() {
+        const ev = mainEvent(), up = upcomingEvent();
+        let t = '';
+        if (ev) t += ev.icon + ' ' + ev.name + '開催中！' + ev.genresShort.join('・') + 'から出題なのだ！' + ev.untilLabel + 'まで！　　　🏆 全国ランキングも、イベント専用の「' + ev.short + '」なのだ！　　　';
+        else if (up) t += '📣 ' + up.startLabel + 'から「' + up.name + '」がスタート！' + up.desc + 'なのだ！　　　';
+        t += '🐉 5体ごとに強力なボスが出現するのだ！　　　👑 塔の最上階では黒竜が待っているのだ！　　　💎 ボスのあとのイベントクイズで、宝物庫の💎を集めよう！　　　';
+        const n = document.getElementById('notice-board-text'); if (n) { n.innerText = t; n.style.animationDuration = Math.max(22, Math.round(t.length * 0.2)) + 's'; }
+        const c = document.getElementById('tap-start-catch'); if (c) c.innerText = ev ? ev.icon + ' ' + ev.name + '！いろいろなジャンルの100問に挑戦なのだ！' : '100問の豆知識で、塔のてっぺんを目指すのだ！';
+    }
     let selectedMode = lsGet(MODE_KEY, 'main');
     if (selectedMode !== 'main' && !isUnlocked(selectedMode)) selectedMode = 'main';
-    function rankKey() { return currentMode === 'main' ? 'zunda_rankings' : 'quiztower_rank_' + currentMode; }
+    function rankKey() { return currentMode === 'main' ? (runEvent ? 'quiztower_rank_ev_' + runEvent.id : 'zunda_rankings') : 'quiztower_rank_' + currentMode; }
     function modeName(m) { return m === 'main' ? '本編' : GENRES[m].name; }
 
     function refreshTreasury() {
@@ -1942,7 +1964,7 @@
         if (tn) tn.innerText = cost === null ? '' : (g >= cost ? '新しい冒険を解放できるのだ！' : '次の解放まで あと💎' + (cost - g) + '個');
         showClearBadge();
         const badge = document.getElementById('tap-start-badge');
-        if (badge) badge.innerText = selectedMode === 'main' ? 'タップしてスタート' : GENRES[selectedMode].icon + ' ' + GENRES[selectedMode].name + 'をスタート';
+        if (badge) badge.innerText = selectedMode === 'main' ? (mainEvent() ? mainEvent().icon + ' ' + mainEvent().name + 'をスタート' : 'タップしてスタート') : GENRES[selectedMode].icon + ' ' + GENRES[selectedMode].name + 'をスタート';
     }
     function renderAdventureList() {
         const gems = getGems();
@@ -1956,9 +1978,10 @@
         document.getElementById('adv-rank').innerHTML = '👑 称号：<b>' + ri.name + '</b>' + (ri.next ? '（集めた💎 ' + getGemTotal() + '個・「' + ri.next.name + '」まで あと' + ri.toNext + '個）' : '（最高の称号なのだ！）');
         document.getElementById('adv-list').innerHTML = rows.map(([k, g]) => {
             const unlocked = k === 'main' || isUnlocked(k);
-            const pic = k === 'main' ? '<div class="adv-main-icon">🗼</div>' : '<img src="' + g.img + '" alt="">';
-            const name = k === 'main' ? '本編 QUIZ TOWER' : g.icon + ' ' + g.name;
-            const desc = k === 'main' ? 'いろいろなジャンルの100問' : g.desc + '（124問）';
+            const mev = mainEvent();
+            const pic = k === 'main' ? '<div class="adv-main-icon">' + (mev ? mev.icon : '🗼') + '</div>' : '<img src="' + g.img + '" alt="">';
+            const name = k === 'main' ? (mev ? mev.name + '（本編）' : '本編 QUIZ TOWER') : g.icon + ' ' + g.name;
+            const desc = k === 'main' ? (mev ? mev.desc + '・' + mev.untilLabel + 'まで' : 'いろいろなジャンルの100問') : g.desc + '（124問）';
             let btn;
             if (unlocked && k === selectedMode) btn = '<button class="adv-action chosen" disabled>✓ 選択中</button>';
             else if (unlocked) btn = '<button class="adv-action play" onclick="playMode(\'' + k + '\')">選ぶ</button>';
@@ -2006,6 +2029,7 @@
         });
     }
     refreshTreasury();
+    refreshNotice();
     if (/[?&]adventure=1/.test(location.search)) { history.replaceState(null, '', location.pathname); openAdventureMenu(); }
 
     function showAllClearScreen() {
@@ -2120,7 +2144,7 @@
     };
     // イベント専用ランキング(使う時だけ書き換える)。期間中はランキングに専用のタブが出る
     // 例: var RANKING_EVENT = { id: 'halloween2026', name: '🎃ハロウィン杯', start: '2026-10-25T00:00:00+09:00', end: '2026-11-01T00:00:00+09:00' };
-    var RANKING_EVENT = null;
+    var RANKING_EVENT = (function() { const e = typeof mainEvent === 'function' ? mainEvent() : null; return e ? { id: e.id, name: e.icon + e.short, start: e.start, end: e.end } : null; })();
     const PF_ACH_TEXT = { clear: '塔を完全制覇すると手に入る', combo10: '10問連続で正解すると手に入る', triple: '「3回攻撃」を出すと手に入る' };
     const PF_KIND_NAME = { icon: 'アイコン', plate: '背景', emblem: 'エンブレム' };
     function pfJson(k, def) { try { return JSON.parse(lsGet(k, '')) || def; } catch(e) { return def; } }
