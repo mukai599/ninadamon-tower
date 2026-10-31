@@ -781,7 +781,7 @@
         <div class="manual-card"><b>🍁 月替わりイベント</b><span>月が替わると、本編のクイズが「イベントクイズ」に入れかわることがあるのだ。11月はアニメ・経済・ゲーム・スポーツ・音楽・映画やドラマ・グルメ・ITから出題されるのだ。イベント中は、全国ランキングにもイベント専用のタブができるのだ。</span></div>
         <div class="manual-card"><b>🎵 BGMチェンジ</b><span>💎を20個つかうと、プロフィールの「BGM」から、ゲーム中の曲を4曲の中から選べるようになるのだ。</span></div>
         <div class="manual-card"><b>👤 プロフィール</b><span>タイトル画面の右上の丸いアイコンから、ランキングの名札(アイコン・背景・エンブレム)を選べるのだ。💎で交換できるものと、ボスを倒す・10問連続正解・3回攻撃・塔の完全制覇で手に入るものがあるのだ。</span></div>
-        <div class="manual-card"><b>📝 クレジット</b><span>音声：VOICEVOX:ずんだもん / VOICEVOX:もち子(cv 明日葉よもぎ)<br>11月イベントのテーマ曲「秋空のクイズタワー」：オリジナル曲(プログラムで作成)</span></div>
+        <div class="manual-card"><b>📝 クレジット</b><span>音声：VOICEVOX:ずんだもん / VOICEVOX:もち子(cv 明日葉よもぎ)<br>BGMチェンジの3曲と11月イベントのテーマ曲「秋空のクイズタワー」：オリジナル曲(プログラムで作成)</span></div>
         <div class="manual-card contact-card"><b>📮 お問い合わせ</b><span>動かない・表示がおかしい・問題の答えが間違っている…などに気づいたら、こちらから教えてほしいのだ。</span>
             <button class="contact-btn" onclick="openContact()">📮 お問い合わせ・不具合の報告</button>
             <div id="contact-note"></div>
@@ -961,9 +961,9 @@
     const BGM_TRACKS = [
         EVENT_BGM ? { id: 'default', name: EVENT_BGM.name, desc: EVENT_BGM.desc, file: EVENT_BGM.file, vol: EVENT_BGM.vol }
                   : { id: 'default', name: 'いつもの曲', desc: 'ニナだもんの標準BGM', file: 'bgm_thinking', vol: 0.1 },
-        { id: 'alt1', name: 'アップテンポ', desc: 'BPM145・元気にバトル', file: 'bgm_alt1', vol: 0.108 },
-        { id: 'alt2', name: 'ハイテンポ', desc: 'BPM150・かけぬける感じ', file: 'bgm_alt2', vol: 0.085 },
-        { id: 'alt3', name: 'ゆったり', desc: 'BPM80・おちついて考えたい人に', file: 'bgm_alt3', vol: 0.122 },
+        { id: 'alt1', name: 'アップテンポ', desc: 'BPM140・元気にバトル', file: 'bgm_new1', vol: 0.083 },
+        { id: 'alt2', name: 'かけぬける', desc: 'BPM156・急ぎ足でスリル満点', file: 'bgm_new2', vol: 0.08 },
+        { id: 'alt3', name: 'ゆったり', desc: 'BPM84・おちついて考えたい人に', file: 'bgm_new3', vol: 0.095 },
         { id: 'alt4', name: 'ボーカル曲', desc: '歌入り・にぎやか', file: 'bgm_alt4', vol: 0.12 }
     ];
     const MUSIC = {
@@ -1248,7 +1248,7 @@
 
     // ===== お問い合わせ(Googleフォーム) =====
     // フォームの「事前入力したURL」をここに入れる。DEVICE_INFO / GAME_STATE の部分を自動で機種情報・進み具合に置き換えて開く
-    const APP_VERSION = '1.5.1';
+    const APP_VERSION = '1.5.2';
     const CONTACT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfPKIBjtYtvE7uNDuArYMt7OVOk-fOat7ySfFI649yUNUNpSg/viewform?usp=pp_url&entry.584805071=DEVICE_INFO&entry.964317062=GAME_STATE'; // 機種の情報 / ゲームの状況
     document.getElementById('app-version-label').innerText = 'v' + APP_VERSION;
     function contactInfo() {
