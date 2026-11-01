@@ -778,7 +778,7 @@
         <div class="manual-card"><b>🗼 塔を登る</b><span>敵を5体倒すたびに1階ずつ塔を登っていくのだ。上の階ほど問題も難しくなって、最上階の黒竜を倒せば完全制覇なのだ。</span></div>
         <div class="manual-card"><b>💎 宝物庫と新しい冒険</b><span>ボスのあとのイベントクイズに正解すると、💎が宝物庫に貯まっていくのだ。ゲームオーバーになっても💎は消えないのだ。「歴史編」「科学編」「文学編」は💎で解放できて、1つ目は5個・2つ目は10個・3つ目は15個必要なのだ。100問制覇すると💎3個のボーナスももらえるのだ。集めた💎の合計で、見習い冒険者→塔の挑戦者→塔の勇者→クイズマスター→伝説の賢者と称号も上がっていくのだ！</span></div>
         <div class="manual-card"><b>⭐ スコアとランキング</b><span>上の段にSCOREと撃破数(💀)が出るのだ。ゲーム終了後は全国ランキングにも登録できるのだ。全国ランキングは毎月1日に新しいシーズンが始まって、先月の上位3人は「殿堂入り」として残るのだ。これまでの記録は「歴代」で見られるのだ。</span></div>
-        <div class="manual-card"><b>🍁 月替わりイベント</b><span>月が替わると、本編のクイズが「イベントクイズ」に入れかわることがあるのだ。11月はアニメ・経済・ゲーム・スポーツ・音楽・映画やドラマ・グルメ・ITから出題されるのだ。イベント中は、全国ランキングにもイベント専用のタブができるのだ。</span></div>
+        <div class="manual-card"><b>🍁 月替わりイベント</b><span>月が替わると、本編のクイズが「イベントクイズ」に入れかわることがあるのだ。11月はアニメ・経済・ゲーム・スポーツ・音楽・映画やドラマ・グルメ・ITから出題されるのだ。イベント中は、全国ランキングにもイベント専用のタブができるのだ。11月は、ハロウィンのモンスター10体が塔に出てくるのだ。</span></div>
         <div class="manual-card"><b>🎵 BGMチェンジ</b><span>💎を20個つかうと、プロフィールの「BGM」から、ゲーム中の曲を4曲の中から選べるようになるのだ。</span></div>
         <div class="manual-card"><b>👤 プロフィール</b><span>タイトル画面の右上の丸いアイコンから、ランキングの名札(アイコン・背景・エンブレム)を選べるのだ。💎で交換できるものと、ボスを倒す・10問連続正解・3回攻撃・塔の完全制覇で手に入るものがあるのだ。</span></div>
         <div class="manual-card"><b>📝 クレジット</b><span>音声：VOICEVOX:ずんだもん / VOICEVOX:もち子(cv 明日葉よもぎ)<br>BGMチェンジの3曲と11月イベントのテーマ曲「ハロウィンナイトのクイズタワー」：オリジナル曲(プログラムで作成)</span></div>
@@ -1196,12 +1196,22 @@
         { name: "古代の石像ゴーレム", img: "images/boss_golem.png", svg: enemyDesigns[4].svg }
     ];
     // 雑魚は9体を順番に登場させる(1階4体ずつ。同じ敵が続けて出ないよう、一周するまで重ならない)
-    function currentEnemyDesign() {
-        const stage = currentStage();
-        if (isBossTurn()) return BOSSES[stage % BOSSES.length];
-        const k = stage * (BOSS_EVERY - 1) + (defCount % BOSS_EVERY);
-        return enemyDesigns[k % enemyDesigns.length];
+    // イベント中は、イベントに mobs があれば、雑魚がそのイベント用のモンスターに入れかわる(ボスはそのまま)
+    function mobList() {
+        if (!(runEvent && runEvent.mobs)) return enemyDesigns;
+        if (!runEvent.mobDesigns) runEvent.mobDesigns = runEvent.mobs.map(m => ({ ...m, svg: enemyDesigns[0].svg }));
+        return runEvent.mobDesigns;
     }
+    function enemyDesignFor(dc) {
+        const stage = Math.floor(dc / BOSS_EVERY);
+        if ((dc + 1) % BOSS_EVERY === 0) return BOSSES[stage % BOSSES.length];
+        const k = stage * (BOSS_EVERY - 1) + (dc % BOSS_EVERY);
+        const list = mobList();
+        return list[k % list.length];
+    }
+    function currentEnemyDesign() { return enemyDesignFor(defCount); }
+    // 次に出る敵の絵を先に読み込んでおく(GIFは重いので、出てきた時にカクつかないように)
+    function preloadNextEnemy() { try { const n = enemyDesignFor(defCount + 1); if (n && n.img) { const im = new Image(); im.src = n.img; } } catch(e) {} }
 
     let bossRoarTimer = null;
     let bossIntroPose = false; // ボスの登場時、ニナだもんが気合いを入れるポーズ(anim_fight_once.gif)を出す
@@ -1233,6 +1243,7 @@
                 if (im && isBossTurn()) im.src = d.img;
             }, 2600);
         }
+        preloadNextEnemy();
         visual.classList.remove('enemy-idle');
         if (opts.spawn) {
             visual.classList.remove('enemy-spawn-anim'); void visual.offsetWidth; visual.classList.add('enemy-spawn-anim');
@@ -1248,7 +1259,7 @@
 
     // ===== お問い合わせ(Googleフォーム) =====
     // フォームの「事前入力したURL」をここに入れる。DEVICE_INFO / GAME_STATE の部分を自動で機種情報・進み具合に置き換えて開く
-    const APP_VERSION = '1.5.5';
+    const APP_VERSION = '1.6.0';
     const CONTACT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfPKIBjtYtvE7uNDuArYMt7OVOk-fOat7ySfFI649yUNUNpSg/viewform?usp=pp_url&entry.584805071=DEVICE_INFO&entry.964317062=GAME_STATE'; // 機種の情報 / ゲームの状況
     document.getElementById('app-version-label').innerText = 'v' + APP_VERSION;
     function contactInfo() {
@@ -1947,7 +1958,7 @@
     function refreshNotice() {
         const ev = mainEvent(), up = upcomingEvent();
         let t = '';
-        if (ev) t += ev.icon + ' ' + ev.name + '開催中！' + ev.genresShort.join('・') + 'から出題なのだ！' + ev.untilLabel + 'まで！　　　🏆 全国ランキングも、イベント専用の「' + ev.short + '」なのだ！　　　';
+        if (ev) t += ev.icon + ' ' + ev.name + '開催中！' + ev.genresShort.join('・') + 'から出題なのだ！' + ev.untilLabel + 'まで！' + (ev.mobs ? '　　　🎃 塔にはハロウィンのモンスターたちも登場するのだ！' : '') + '　　　🏆 全国ランキングも、イベント専用の「' + ev.short + '」なのだ！　　　';
         else if (up) t += '📣 ' + up.startLabel + 'から「' + up.name + '」がスタート！' + up.desc + 'なのだ！　　　';
         t += '🐉 5体ごとに強力なボスが出現するのだ！　　　👑 塔の最上階では黒竜が待っているのだ！　　　💎 ボスのあとのイベントクイズで、宝物庫の💎を集めよう！　　　';
         const n = document.getElementById('notice-board-text'); if (n) { n.innerText = t; n.style.animationDuration = Math.max(22, Math.round(t.length * 0.2)) + 's'; }
