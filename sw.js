@@ -1,6 +1,6 @@
 // 同じ mukai599.github.io 上の第1弾(zunda-rpg-v2)とキャッシュが混ざらないよう、専用の名前を使う
 const CACHE_PREFIX = 'ninadamon-tower-';
-const CACHE_NAME = CACHE_PREFIX + 'v1';
+const CACHE_NAME = CACHE_PREFIX + 'v2'; // 上げると、端末に残っている古いファイルが全部消える
 const CORE_ASSETS = [
   './manifest.json'
 ];
