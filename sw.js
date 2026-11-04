@@ -25,6 +25,8 @@ self.addEventListener('activate', (event) => {
 
 function isAppShell(request, url) {
   // ナビゲーション(URLを開く/再読み込み)と index.html 自体は常に最新を優先する
+  // 問題データ(questions/*.js)も、月替わりのイベント問題を差し替えるので常に最新を優先する
+  if (url.pathname.indexOf('/questions/') !== -1 && url.pathname.endsWith('.js')) return true;
   return request.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname === '/' || url.pathname.endsWith('/');
 }
 
